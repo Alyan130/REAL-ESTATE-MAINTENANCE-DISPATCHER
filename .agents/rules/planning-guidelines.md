@@ -19,7 +19,6 @@ If the user explicitly says to use Context7 mcp for this feature, use the `resol
 Do **not** use Context7 by default. Simple codebase exploration is sufficient for most planning tasks.
 
 ## Rules
-- DONT START IMPLEMENT AFTER YOU PLAN , tell the user "implemented can I now execute it".
 - Always explore the codebase first — no exceptions
 - Only use Context7 MCP when the user explicitly requests it
 - Never plan a feature without understanding how it fits into the existing codebase
