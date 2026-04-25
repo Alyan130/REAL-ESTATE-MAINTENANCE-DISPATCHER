@@ -1,9 +1,0 @@
-- [ ] Add new dependencies to backend/requirements.txt
-- [ ] Create backend/core/config.py with Settings
-- [ ] Implement backend/core/security.py hash utilities
-- [ ] Implement backend/core/security.py token utilities
-- [ ] Implement backend/api/deps.py get_current_user middleware
-- [ ] Implement backend/api/routes/auth.py login endpoint
-- [ ] Initialize FastAPI app and include routers in backend/main.py
-- [ ] Create robust test suite in backend/tests/test_auth.py
-- [ ] Run pytest on backend/tests/test_auth.py to ensure acceptance criteria are met

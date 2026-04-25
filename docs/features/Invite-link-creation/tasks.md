@@ -1,6 +1,0 @@
-- [x] Add resend dependency to backend/requirements.txt
-- [x] Add RESEND_API_KEY and BASE_URL to backend/.env and backend/core/config.py
-- [x] Create require_pm dependency in backend/api/deps.py
-- [x] Create backend/core/email.py with send_invite_email() using Resend
-- [x] Create backend/api/routes/pm.py with PM router
-- [x] Register PM router in backend/main.py

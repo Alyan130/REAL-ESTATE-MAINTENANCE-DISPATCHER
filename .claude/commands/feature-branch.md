@@ -1,8 +1,3 @@
----
-description: Invoked when starting work on a new feature.
----
-
-
 ## Steps
 
 ### 1. Confirm Feature Name
@@ -29,7 +24,7 @@ git branch --show-current
 ```
 Confirm the active branch is the feature branch before doing any work.
 
-### 5. GitHub MCP is connected:
+### 5. (If GitHub MCP is connected)
 Use the GitHub MCP server to verify the remote also reflects the new branch after first push.
 Use `list-branches` to confirm it exists on the remote once pushed.
 

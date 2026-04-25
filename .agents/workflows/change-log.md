@@ -1,5 +1,5 @@
 ---
-description: After each change , addtion , fix or debug add a log in CHANGE-LOG.md
+description: After each change , addtion , fix or debug add a log in Changelog.md
 ---
 
 ## Purpose
@@ -23,7 +23,6 @@ The changelog is the project's shared memory. It transfers context between agent
 ```
 
 ## Rules
-- DONT create new file , only update in existing CHANGE-LOG.md 
 - Keep entries to 1–2 lines. Be concise but never sacrifice clarity for brevity.
 - Plain language — no jargon, no raw implementation details.
 - Always include **why** something changed or **what to watch out for** if it affects future work.

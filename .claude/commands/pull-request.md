@@ -1,8 +1,3 @@
----
-description:  Invoked when a feature is complete and ready to be reviewed for merging into main.
----
-
-
 ## Steps
 
 ### 1. Confirm the Feature Branch is Up to Date
