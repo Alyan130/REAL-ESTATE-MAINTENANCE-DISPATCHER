@@ -57,3 +57,16 @@ def get_current_user(
 
 
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
+
+
+def require_pm(user: CurrentUserDep) -> User:
+    """Raise 403 if the authenticated user is not a property manager."""
+    if user.role != "pm":
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Property manager access required.",
+        )
+    return user
+
+
+PMUserDep = Annotated[User, Depends(require_pm)]

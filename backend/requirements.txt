@@ -6,5 +6,6 @@ fastapi[standard]
 pydantic-settings
 bcrypt
 PyJWT
+resend
 pytest
 httpx

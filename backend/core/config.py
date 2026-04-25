@@ -25,5 +25,11 @@ class Settings(BaseSettings):
     # bcrypt work factor (cost)
     BCRYPT_WORK_FACTOR: int = 12
 
+    # Resend (email)
+    RESEND_API_KEY: str = ""
+
+    # Frontend base URL (used for invite links)
+    BASE_URL: str = "https://resend.dev"
+
 
 settings = Settings()

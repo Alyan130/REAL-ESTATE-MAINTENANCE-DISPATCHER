@@ -3,7 +3,7 @@ main.py — FastAPI application entry point.
 """
 from fastapi import FastAPI
 
-from api.routes import auth
+from api.routes import auth, pm
 
 app = FastAPI(
     title="Real Estate Maintenance Dispatcher",
@@ -12,3 +12,4 @@ app = FastAPI(
 
 # ─── Routers ──────────────────────────────────────────────────────────────────
 app.include_router(auth.router)
+app.include_router(pm.router)
