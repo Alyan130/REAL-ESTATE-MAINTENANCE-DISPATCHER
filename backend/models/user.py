@@ -18,6 +18,8 @@ class User(Base):
     phone: Mapped[str | None] = mapped_column(Text, nullable=True)
     role: Mapped[str] = mapped_column(String(20), nullable=False)  # 'pm' | 'tenant' | 'vendor'
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    invite_status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")  # 'pending' | 'approved'
+    password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
