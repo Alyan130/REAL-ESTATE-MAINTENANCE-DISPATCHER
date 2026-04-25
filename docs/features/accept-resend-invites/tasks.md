@@ -1,0 +1,9 @@
+- [ ] Modify User model in backend/models/user.py to add last_invite_iat
+- [ ] Create and apply Alembic migration for last_invite_iat
+- [ ] Implement AcceptInviteRequest schema in backend/api/routes/auth.py
+- [ ] Implement POST /auth/accept-invite endpoint in backend/api/routes/auth.py
+- [ ] Implement POST /pm/tenants/{id}/resend-invite endpoint in backend/api/routes/pm.py
+- [ ] Implement POST /pm/vendors/{id}/resend-invite endpoint in backend/api/routes/pm.py
+- [ ] Update user creation in pm.py to set last_invite_iat
+- [ ] Add tests for accept-invite flow in backend/tests/test_auth.py
+- [ ] Add tests for resend-invite flow in backend/tests/test_pm.py

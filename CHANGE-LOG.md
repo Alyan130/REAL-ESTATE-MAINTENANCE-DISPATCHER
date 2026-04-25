@@ -1,3 +1,9 @@
+## [0.4.0] - 2026-04-25
+### Added
+- Invite acceptance (`POST /auth/accept-invite`) to set initial password and return a login token.
+- PM invite resend endpoints; `users.last_invite_iat` invalidates older invite tokens (new Alembic migration).
+
+
 ## [0.3.0] - 2026-04-25
 ### Added
 - `backend/core/email.py` — Resend-powered email service with `send_invite_email()`. Sends HTML invite emails with a CTA link to `{BASE_URL}/accept-invite?token={token}`. Uses `onboarding@resend.dev` as the sender for development — swap to a verified domain before production.

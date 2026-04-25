@@ -14,7 +14,7 @@ from sqlalchemy.orm import joinedload
 
 from api.deps import DbDep, PMUserDep
 from core.email import send_invite_email
-from core.security import create_token
+from core.security import create_token, decode_token
 from models.property import Property
 from models.tenant import Tenant
 from models.user import User
@@ -47,6 +47,10 @@ class TenantResponse(BaseModel):
     invite_status: str
 
     model_config = {"from_attributes": True}
+
+
+class ResendInviteResponse(BaseModel):
+    ok: bool = True
 
 
 class CreateVendorRequest(BaseModel):
@@ -119,6 +123,12 @@ def create_tenant(
 
         # Generate invite token and send email
         token = create_token(user_id=user.id, role="tenant", token_type="invite")
+        payload = decode_token(token)
+        iat_raw = payload.get("iat")
+        try:
+            user.last_invite_iat = int(iat_raw) if iat_raw is not None else None
+        except (TypeError, ValueError):
+            user.last_invite_iat = None
         send_invite_email(to_email=body.email, name=body.name, role="tenant", token=token)
 
         db.commit()
@@ -187,6 +197,12 @@ def create_vendor(
 
         # Generate invite token and send email
         token = create_token(user_id=user.id, role="vendor", token_type="invite")
+        payload = decode_token(token)
+        iat_raw = payload.get("iat")
+        try:
+            user.last_invite_iat = int(iat_raw) if iat_raw is not None else None
+        except (TypeError, ValueError):
+            user.last_invite_iat = None
         send_invite_email(to_email=body.email, name=body.name, role="vendor", token=token)
 
         db.commit()
@@ -254,6 +270,66 @@ def list_tenants(
         )
 
 
+@router.post("/tenants/{tenant_id}/resend-invite", response_model=ResendInviteResponse)
+def resend_tenant_invite(
+    tenant_id: uuid.UUID,
+    pm: PMUserDep,
+    db: DbDep,
+) -> ResendInviteResponse:
+    """Resend an invite email to a pending tenant (invalidates older invite tokens)."""
+    try:
+        tenant: Tenant | None = (
+            db.query(Tenant)
+            .join(Property, Tenant.property_id == Property.id)
+            .options(joinedload(Tenant.user))
+            .filter(Tenant.id == tenant_id, Property.pm_id == pm.id)
+            .first()
+        )
+        if tenant is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Tenant not found.",
+            )
+
+        user: User | None = tenant.user
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found.",
+            )
+
+        if user.invite_status != "pending":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invite already accepted.",
+            )
+
+        token = create_token(user_id=user.id, role=user.role, token_type="invite")
+        payload = decode_token(token)
+        iat_raw = payload.get("iat")
+        try:
+            user.last_invite_iat = int(iat_raw) if iat_raw is not None else None
+        except (TypeError, ValueError):
+            user.last_invite_iat = None
+
+        send_invite_email(
+            to_email=user.email,
+            name=user.full_name or "there",
+            role=user.role,
+            token=token,
+        )
+        db.commit()
+        return ResendInviteResponse(ok=True)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to resend invite: {exc}",
+        )
+
+
 @router.get("/vendors", response_model=list[VendorResponse])
 def list_vendors(
     pm: PMUserDep,
@@ -290,4 +366,68 @@ def list_vendors(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to list vendors: {exc}",
+        )
+
+
+@router.post("/vendors/{vendor_id}/resend-invite", response_model=ResendInviteResponse)
+def resend_vendor_invite(
+    vendor_id: uuid.UUID,
+    pm: PMUserDep,
+    db: DbDep,
+) -> ResendInviteResponse:
+    """Resend an invite email to a pending vendor (invalidates older invite tokens)."""
+    try:
+        vendor: Vendor | None = (
+            db.query(Vendor)
+            .filter(Vendor.id == vendor_id, Vendor.pm_id == pm.id)
+            .first()
+        )
+        if vendor is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Vendor not found.",
+            )
+
+        if not vendor.email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Vendor has no email address.",
+            )
+
+        user: User | None = db.query(User).filter(User.email == vendor.email).first()
+        if user is None:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found.",
+            )
+
+        if user.invite_status != "pending":
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invite already accepted.",
+            )
+
+        token = create_token(user_id=user.id, role=user.role, token_type="invite")
+        payload = decode_token(token)
+        iat_raw = payload.get("iat")
+        try:
+            user.last_invite_iat = int(iat_raw) if iat_raw is not None else None
+        except (TypeError, ValueError):
+            user.last_invite_iat = None
+
+        send_invite_email(
+            to_email=user.email,
+            name=user.full_name or vendor.name,
+            role=user.role,
+            token=token,
+        )
+        db.commit()
+        return ResendInviteResponse(ok=True)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to resend invite: {exc}",
         )

@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Boolean, String, Text
+from sqlalchemy import Boolean, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.sql import func
@@ -20,6 +20,7 @@ class User(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
     invite_status: Mapped[str] = mapped_column(String(20), nullable=False, default="pending")  # 'pending' | 'approved'
     password_hash: Mapped[str | None] = mapped_column(Text, nullable=True)
+    last_invite_iat: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True), nullable=False, server_default=func.now()
     )
