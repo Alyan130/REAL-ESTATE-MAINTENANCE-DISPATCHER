@@ -1,3 +1,7 @@
+---
+description: Use this when you are asked to test a feature.
+---
+
 ## User Responsibility
 You must be on the correct feature branch before invoking this command.
 ```bash
