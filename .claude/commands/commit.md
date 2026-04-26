@@ -1,3 +1,8 @@
+---
+description: Invoked after changes are made and ready to be saved to the feature branch.
+---
+
+
 ## Steps
 
 ### 1. Confirm You Are on the Feature Branch
@@ -40,7 +45,7 @@ git push origin feature/<current-branch-name>
 ```
 Never push to `main`.
 
-### 6. (If GitHub MCP is connected)
+### 6. GitHub MCP is connected:
 Use GitHub MCP to confirm the push was received on the remote.
 Use `get-commit` or `list-commits` on the feature branch to verify.
 
