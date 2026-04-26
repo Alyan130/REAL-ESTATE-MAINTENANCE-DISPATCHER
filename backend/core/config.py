@@ -31,5 +31,10 @@ class Settings(BaseSettings):
     # Frontend base URL (used for invite links)
     BASE_URL: str = "https://resend.dev"
 
+    # Supabase Storage
+    SUPABASE_URL: str = ""
+    SUPABASE_KEY: str = ""
+    SUPABASE_STORAGE_BUCKET: str = "tickets"
+
 
 settings = Settings()

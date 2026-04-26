@@ -1,0 +1,13 @@
+- [ ] Migrate tenant/vendor creation endpoints to `auth.py`
+- [ ] Implement `POST /properties` (Create property)
+- [ ] Implement `GET /properties` (List properties)
+- [ ] Implement `GET /properties/{property_id}` (Get property)
+- [ ] Implement `DELETE /properties/{property_id}` (Soft delete property)
+- [ ] Implement `GET /tenants` (List tenants with property filter)
+- [ ] Implement `GET /tenants/{tenant_id}` (Get tenant)
+- [ ] Implement `DELETE /tenants/{tenant_id}` (Deactivate tenant)
+- [ ] Implement `GET /vendors` (List vendors)
+- [ ] Implement `GET /vendors/{vendor_id}` (Get vendor)
+- [ ] Implement `DELETE /vendors/{vendor_id}` (Deactivate vendor)
+- [ ] Update `backend/main.py` to register new routers
+- [ ] Remove `backend/api/routes/pm.py`

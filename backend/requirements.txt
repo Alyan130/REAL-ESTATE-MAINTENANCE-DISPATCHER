@@ -7,5 +7,7 @@ pydantic-settings
 bcrypt
 PyJWT
 resend
+supabase
+python-multipart
 pytest
 httpx

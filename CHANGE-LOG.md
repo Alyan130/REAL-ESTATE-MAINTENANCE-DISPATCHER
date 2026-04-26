@@ -1,3 +1,14 @@
+## [0.5.0] - 2026-04-26
+### Changed
+- Split `pm.py` into dedicated `properties.py`, `tenants.py`, and `vendors.py` routers — each resource now has its own file and URL prefix.
+- Moved tenant/vendor invite creation and resend endpoints into `auth.py` under `/auth/invites/*` to centralize all invite logic.
+- Deleted `pm.py` and updated `main.py` to register the four new routers.
+
+### Added
+- Full CRUD for properties: create, list, get by ID, and soft-delete — all scoped to the authenticated PM.
+- Read and deactivate endpoints for tenants and vendors — deactivation disables both the profile and the linked user account.
+- Tenants list supports optional `property_id` query filter.
+
 ## [0.4.0] - 2026-04-25
 ### Added
 - Invite acceptance (`POST /auth/accept-invite`) to set initial password and return a login token.
