@@ -17,6 +17,7 @@ class Settings(BaseSettings):
 
     # Database
     DATABASE_URL: str
+    DIRECT_URL: str = ""
 
     # JWT
     JWT_SECRET_KEY: str = "change-me-in-production"

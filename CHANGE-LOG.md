@@ -1,3 +1,15 @@
+## [0.6.0] - 2026-04-26
+### Added
+- Maintenance ticket submission system with multi-photo support; uses `BackgroundTasks` for non-blocking uploads to Supabase Storage.
+- `backend/core/storage.py` helper for Supabase Storage uploads; returns public URLs for persistent media access.
+- Role-based ticket listing and retrieval; PMs see property-scoped tickets, Tenants see only their own.
+- Status update endpoint for PMs to transition tickets through the maintenance workflow.
+- `backend/.env` with production-ready credentials for Supabase, Resend, and PostgreSQL.
+
+### Changed
+- Centralized all configurations in `Settings` class; `database.py` and other modules now use `core.config.settings` for consistency.
+- Standardized `DATABASE_URL` and `DIRECT_URL` handling to support Supabase connection pooling across the app.
+
 ## [0.5.0] - 2026-04-26
 ### Changed
 - Split `pm.py` into dedicated `properties.py`, `tenants.py`, and `vendors.py` routers — each resource now has its own file and URL prefix.
