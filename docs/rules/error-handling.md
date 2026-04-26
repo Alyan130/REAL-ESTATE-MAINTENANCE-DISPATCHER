@@ -15,4 +15,3 @@
 - All API calls wrapped in try/catch — no unhandled promise rejections.
 - User-facing error messages must be plain English — never expose raw error strings or stack traces.
 - Failed actions must show a clear inline error and retain the user's input so they can retry.
-
