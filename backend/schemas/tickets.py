@@ -19,8 +19,7 @@ class TicketCreatedResponse(BaseModel):
 class TicketResponse(BaseModel):
     id: uuid.UUID
     property_id: uuid.UUID
-    tenant_id: u
-    uid.UUID
+    tenant_id: uuid.UUID
     title: str
     description: str | None
     category: str | None
