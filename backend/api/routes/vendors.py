@@ -8,30 +8,13 @@ from __future__ import annotations
 import uuid
 
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
 
 from api.deps import DbDep, PMUserDep
 from models.user import User
 from models.vendor import Vendor
+from schemas.vendors import VendorResponse
 
 router = APIRouter(prefix="/vendors", tags=["vendors"])
-
-
-# ─── Schemas ──────────────────────────────────────────────────────────────────
-
-
-class VendorResponse(BaseModel):
-    id: uuid.UUID
-    name: str
-    email: str | None
-    phone: str | None
-    categories: list[str] | None
-    max_concurrent_jobs: int
-    rating: float
-    invite_status: str
-    is_active: bool
-
-    model_config = {"from_attributes": True}
 
 
 # ─── Endpoints ───────────────────────────────────────────────────────────────

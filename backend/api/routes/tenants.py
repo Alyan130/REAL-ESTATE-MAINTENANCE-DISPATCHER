@@ -6,36 +6,16 @@ Tenant read and deactivate routes for property managers.
 from __future__ import annotations
 
 import uuid
-from datetime import date
 
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
 from sqlalchemy.orm import joinedload
 
 from api.deps import DbDep, PMUserDep
 from models.property import Property
 from models.tenant import Tenant
-from models.user import User
+from schemas.tenants import TenantResponse
 
 router = APIRouter(prefix="/tenants", tags=["tenants"])
-
-
-# ─── Schemas ──────────────────────────────────────────────────────────────────
-
-
-class TenantResponse(BaseModel):
-    id: uuid.UUID
-    user_id: uuid.UUID
-    email: str
-    name: str | None
-    property_id: uuid.UUID
-    unit_number: str | None
-    lease_start: date | None
-    lease_end: date | None
-    invite_status: str
-    is_active: bool
-
-    model_config = {"from_attributes": True}
 
 
 # ─── Endpoints ───────────────────────────────────────────────────────────────
@@ -52,7 +32,6 @@ def list_tenants(
         query = (
             db.query(Tenant)
             .join(Property, Tenant.property_id == Property.id)
-            .join(User, Tenant.user_id == User.id)
             .filter(Property.pm_id == pm.id, Tenant.is_active.is_(True))
             .options(joinedload(Tenant.user))
         )

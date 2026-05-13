@@ -7,10 +7,8 @@ from __future__ import annotations
 
 import uuid
 import logging
-from datetime import datetime
 
 from fastapi import APIRouter, BackgroundTasks, File, Form, HTTPException, UploadFile, status
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from api.deps import CurrentUserDep, DbDep, PMUserDep
@@ -19,46 +17,16 @@ from database import SessionLocal
 from models.property import Property
 from models.tenant import Tenant
 from models.ticket import Ticket
-from models.user import User
+from schemas.tickets import (
+    StatusUpdateResponse,
+    TicketCreatedResponse,
+    TicketResponse,
+    UpdateStatusRequest,
+)
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/tickets", tags=["tickets"])
-
-
-# ─── Schemas ──────────────────────────────────────────────────────────────────
-
-
-class TicketCreatedResponse(BaseModel):
-    id: uuid.UUID
-    message: str = "Ticket received. Processing in background."
-
-
-class TicketResponse(BaseModel):
-    id: uuid.UUID
-    property_id: uuid.UUID
-    tenant_id: uuid.UUID
-    title: str
-    description: str | None
-    category: str | None
-    priority: str | None
-    status: str
-    media_urls: list[str] | None
-    ai_summary: str | None
-    permission_to_enter: bool
-    created_at: datetime
-    updated_at: datetime
-
-    model_config = {"from_attributes": True}
-
-
-class UpdateStatusRequest(BaseModel):
-    status: str
-
-
-class StatusUpdateResponse(BaseModel):
-    id: uuid.UUID
-    status: str
 
 
 # ─── Background Task ─────────────────────────────────────────────────────────

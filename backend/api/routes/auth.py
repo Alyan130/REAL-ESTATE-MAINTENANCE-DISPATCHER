@@ -6,89 +6,23 @@ Authentication and invitation routes.
 from __future__ import annotations
 
 import uuid
-from datetime import date
-from typing import Annotated
 
 import jwt
-from fastapi import APIRouter, Depends, HTTPException, status
-from pydantic import BaseModel, EmailStr
-from sqlalchemy.orm import Session, joinedload
+from fastapi import APIRouter, HTTPException, status
+from sqlalchemy.orm import joinedload
 
 from api.deps import DbDep, PMUserDep
 from core.email import send_invite_email
 from core.security import create_token, decode_token, hash_password, verify_password
-from database import get_db
 from models.property import Property
 from models.tenant import Tenant
 from models.user import User
 from models.vendor import Vendor
+from schemas.auth import AcceptInviteRequest, LoginRequest, ResendInviteResponse, TokenResponse
+from schemas.tenants import CreateTenantRequest, TenantInviteResponse
+from schemas.vendors import CreateVendorRequest, VendorInviteResponse
 
 router = APIRouter(prefix="/auth", tags=["auth"])
-
-# ─── Schemas ──────────────────────────────────────────────────────────────────
-
-
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-
-class TokenResponse(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
-
-
-class AcceptInviteRequest(BaseModel):
-    token: str
-    password: str
-    confirm_password: str
-
-
-class CreateTenantRequest(BaseModel):
-    name: str
-    email: EmailStr
-    property_id: uuid.UUID
-    unit_number: str | None = None
-    lease_start: date | None = None
-    lease_end: date | None = None
-
-
-class TenantResponse(BaseModel):
-    id: uuid.UUID
-    user_id: uuid.UUID
-    email: str
-    name: str | None
-    property_id: uuid.UUID
-    unit_number: str | None
-    lease_start: date | None
-    lease_end: date | None
-    invite_status: str
-
-    model_config = {"from_attributes": True}
-
-
-class CreateVendorRequest(BaseModel):
-    name: str
-    email: EmailStr
-    phone: str | None = None
-    categories: list[str] | None = None
-    max_concurrent_jobs: int = 3
-
-
-class VendorResponse(BaseModel):
-    id: uuid.UUID
-    name: str
-    email: str | None
-    phone: str | None
-    categories: list[str] | None
-    max_concurrent_jobs: int
-    invite_status: str
-
-    model_config = {"from_attributes": True}
-
-
-class ResendInviteResponse(BaseModel):
-    ok: bool = True
 
 
 # ─── Auth Endpoints ──────────────────────────────────────────────────────────
@@ -245,7 +179,7 @@ def accept_invite(body: AcceptInviteRequest, db: DbDep) -> TokenResponse:
 
 @router.post(
     "/invites/tenants",
-    response_model=TenantResponse,
+    response_model=TenantInviteResponse,
     status_code=status.HTTP_201_CREATED,
     tags=["invites"],
 )
@@ -253,7 +187,7 @@ def create_tenant(
     body: CreateTenantRequest,
     pm: PMUserDep,
     db: DbDep,
-) -> TenantResponse:
+) -> TenantInviteResponse:
     """Create a tenant user, link to a property, and send an invite email."""
     try:
         # Verify the property exists and belongs to this PM
@@ -307,7 +241,7 @@ def create_tenant(
         db.refresh(tenant)
         db.refresh(user)
 
-        return TenantResponse(
+        return TenantInviteResponse(
             id=tenant.id,
             user_id=user.id,
             email=user.email,
@@ -330,7 +264,7 @@ def create_tenant(
 
 @router.post(
     "/invites/vendors",
-    response_model=VendorResponse,
+    response_model=VendorInviteResponse,
     status_code=status.HTTP_201_CREATED,
     tags=["invites"],
 )
@@ -338,7 +272,7 @@ def create_vendor(
     body: CreateVendorRequest,
     pm: PMUserDep,
     db: DbDep,
-) -> VendorResponse:
+) -> VendorInviteResponse:
     """Create a vendor user, link to the PM, and send an invite email."""
     try:
         # Check for duplicate email
@@ -386,7 +320,7 @@ def create_vendor(
         db.refresh(vendor)
         db.refresh(user)
 
-        return VendorResponse(
+        return VendorInviteResponse(
             id=vendor.id,
             name=vendor.name,
             email=vendor.email,

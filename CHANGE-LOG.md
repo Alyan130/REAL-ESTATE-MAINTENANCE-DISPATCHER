@@ -1,3 +1,9 @@
+## [0.7.0] - 2026-05-13
+### Changed
+- Centralized all Pydantic models into `backend/schemas/` to improve code organization and maintainability.
+- Updated all API routes to import from the new unified schema package.
+- Standardized `TenantResponse` and `VendorResponse` variants to eliminate duplication across routes.
+
 ## [0.6.0] - 2026-04-26
 ### Added
 - Maintenance ticket submission system with multi-photo support; uses `BackgroundTasks` for non-blocking uploads to Supabase Storage.

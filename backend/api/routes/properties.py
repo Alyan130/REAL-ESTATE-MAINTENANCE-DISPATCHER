@@ -6,34 +6,14 @@ Property CRUD routes for property managers.
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
 
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
 
 from api.deps import DbDep, PMUserDep
 from models.property import Property
+from schemas.properties import CreatePropertyRequest, PropertyResponse
 
 router = APIRouter(prefix="/properties", tags=["properties"])
-
-
-# ─── Schemas ──────────────────────────────────────────────────────────────────
-
-
-class CreatePropertyRequest(BaseModel):
-    name: str
-    address: str
-
-
-class PropertyResponse(BaseModel):
-    id: uuid.UUID
-    pm_id: uuid.UUID
-    name: str
-    address: str
-    is_active: bool
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
 
 
 # ─── Endpoints ───────────────────────────────────────────────────────────────
