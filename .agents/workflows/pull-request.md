@@ -1,5 +1,5 @@
 ---
-description: Invoked when a feature is complete and ready merging into main.
+description: Invoked when a feature is complete and ready to be reviewed for merging into main.
 ---
 
 ## Steps
@@ -14,10 +14,10 @@ git status --porcelain
 ```
 
 **If the output is non-empty (uncommitted or untracked changes exist):**
-- **Abort immediately.**
+- ❌ **Abort immediately.**
 - Surface this exact message to the user:
 
-  >  Aborted: Your working tree has uncommitted changes. Please commit or stash them before opening a PR.
+  > ⛔ Aborted: Your working tree has uncommitted changes. Please commit or stash them before opening a PR.
   > Run `git status` to see what's pending.
 
 - Do **not** proceed to any further step.
@@ -31,10 +31,10 @@ git status --porcelain
 Before creating a new PR, use the GitHub MCP `list-pull-requests` tool to check if a PR already exists for `feature/<n>` targeting `main`.
 
 **If a PR already exists:**
--  **Do not create a new PR.**
+- ❌ **Do not create a new PR.**
 - Surface this message to the user:
 
-  >  A PR already exists for `feature/<n>` → `main`:
+  > ⚠️ A PR already exists for `feature/<n>` → `main`:
   > **[PR Title]** — [PR URL]
   >
   > Linking to the existing PR instead of creating a duplicate. If you want to update it, edit the PR body manually.
@@ -57,7 +57,7 @@ Use the GitHub MCP `create-pull-request` tool with the following:
 | `body` | See PR body template below |
 
 **If PR creation fails:**
--  **Abort immediately.**
+- ❌ **Abort immediately.**
 - Surface the full error to the user and stop. Do not attempt to merge.
 
 #### PR Body Template
@@ -75,25 +75,32 @@ Use the GitHub MCP `create-pull-request` tool with the following:
 
 ---
 
-### 5.  Approval Gate — Human Must Confirm Before Merge
+### 5. ⛔ Approval Gate — Human Must Confirm Before Merge
 
 After the PR is created (or linked), **stop and wait**.
 
 Show the user this message:
 
-> PR ready for review:
+> ✅ PR ready for review:
 > **[PR Title]**
->  [PR URL]
+> 🔗 [PR URL]
 > Branch: `feature/<n>` → `main`
 >
 > **Review the PR before proceeding.**
 > When you're ready to merge, reply: `merge PR` or `go ahead and merge`.
 >
-> The agent will not merge until you explicitly confirm.
+> ⚠️ The agent will not merge until you explicitly confirm.
 
 **Do not proceed to Step 6 until the user sends an explicit confirmation message.**
 
-Ask the user to confirm explicitly.
+Accepted confirmation phrases (case-insensitive):
+- `merge PR`
+- `go ahead and merge`
+- `merge it`
+- `approve and merge`
+- `lgtm merge`
+
+Any other response should be treated as **not confirmed**. Ask the user to confirm explicitly.
 
 ---
 
@@ -109,11 +116,11 @@ Once the user confirms, use the GitHub MCP `merge-pull-request` tool:
 | `commit_message` | One-line summary of the change |
 
 **If the merge fails:**
--  **Do not retry automatically.**
+- ❌ **Do not retry automatically.**
 - Surface the full error to the user.
 - Then show:
 
-  > Merge failed. Common causes:
+  > ⛔ Merge failed. Common causes:
   > - Merge conflicts between `feature/<n>` and `main`
   > - Required status checks have not passed
   > - Branch protection requires approvals that haven't been granted
@@ -128,7 +135,7 @@ Once the user confirms, use the GitHub MCP `merge-pull-request` tool:
 
 After a successful merge, show:
 
-> Merged successfully!
+> ✅ Merged successfully!
 > - **PR:** [PR Title] — [PR URL]
 > - **Branch:** `feature/<n>` → `main`
 > - **Merge commit SHA:** `<sha>`

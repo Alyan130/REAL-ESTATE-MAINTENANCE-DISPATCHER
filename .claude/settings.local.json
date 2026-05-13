@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pip install *)",
+      "Bash(python -c \"from api.routes.pm import router; print\\('PM router imported OK —', len\\(router.routes\\), 'routes'\\)\")",
+      "Bash(python -c \"import fastapi; print\\(fastapi.__file__\\)\")",
+      "Bash(pip show *)",
+      "Bash(where python *)",
+      "Bash(pip list *)",
+      "Bash(python -m pip list)",
+      "Bash(python -c \"from main import app; print\\('Routes:'\\); [print\\(f'  {r.methods} {r.path}'\\) for r in app.routes if hasattr\\(r, 'methods'\\)]\")"
+    ]
+  }
+}

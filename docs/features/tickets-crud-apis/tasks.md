@@ -1,0 +1,9 @@
+- [ ] Add `supabase` and `python-multipart` to `backend/requirements.txt`
+- [ ] Create `backend/core/storage.py` for Supabase Storage initialization
+- [ ] Implement `POST /tickets` request handler (Identity parsing + Immediate response)
+- [ ] Implement `process_ticket_submission` background task (Storage upload + DB update)
+- [ ] Implement `GET /tickets` listing with RBAC (PM vs Tenant visibility)
+- [ ] Implement `GET /tickets/{ticket_id}` details endpoint
+- [ ] Implement `PATCH /tickets/{ticket_id}/status` status update (PM only)
+- [ ] Register tickets router in `backend/main.py`
+- [ ] Update `CHANGE-LOG.md`

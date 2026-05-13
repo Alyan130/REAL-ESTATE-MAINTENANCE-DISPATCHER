@@ -1,0 +1,14 @@
+- [ ] Initialize Python environment and dependencies in backend directory
+- [ ] Create missing required files (requirements.txt, .env)
+- [ ] Run alembic init to setup Alembic configuration
+- [ ] Update alembic.ini and env.py for migration pool/direct URL usage
+- [ ] Create backend/models directory or file
+- [ ] Define User model
+- [ ] Define Property model
+- [ ] Define Tenant model
+- [ ] Define Vendor model
+- [ ] Define Ticket model
+- [ ] Define VendorJob model
+- [ ] Define Notification model
+- [ ] Configure database.py to expose the SQLAlchemy connection Engine
+- [ ] Generate initial Alembic migration using autogenerate
