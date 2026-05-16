@@ -11,3 +11,10 @@ supabase
 python-multipart
 pytest
 httpx
+langchain-core
+langgraph
+langsmith
+langchain-openai
+langgraph-checkpoint-redis
+redis
+upstash-redis
