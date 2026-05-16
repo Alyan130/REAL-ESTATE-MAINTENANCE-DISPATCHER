@@ -1,3 +1,8 @@
+## [0.8.0] - 2026-05-16
+### Added
+- Scaffolded `agentic_AI` directory structure in `backend/` including empty components for agents, nodes, and tools.
+- Set up foundational modules (`ticket_state.py`, `redis_checkpointer.py`) to prepare for LangGraph integration.
+
 ## [0.7.0] - 2026-05-13
 ### Changed
 - Centralized all Pydantic models into `backend/schemas/` to improve code organization and maintainability.
