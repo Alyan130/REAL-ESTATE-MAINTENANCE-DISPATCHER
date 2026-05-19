@@ -1,4 +1,13 @@
+## [0.9.0] - 2026-05-19
+### Added
+- `TicketState` refactored from `TypedDict` to a strict Pydantic `BaseModel` with proper LangGraph reducers (`Annotated[list, operator.add]`) on `vendors_contacted`, `negotiation_messages`, and `dispatch_attempts` — prevents list overwrites in multi-step agent loops.
+- Implemented `get_checkpointer()` context manager in `backend/agentic_AI/checkpointer.py` using `RedisSaver` from `langgraph-checkpoint-redis`; connects to Upstash over TCP (`rediss://`) with SSL auto-enabled.
+### Changed
+- Replaced REST-based Upstash vars (`UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`) in `.env` and `config.py` with a single `REDIS_URL` TCP connection string — REST client is no longer needed.
+- Synced `config.py` `Settings` class with all `.env` vars: added `LANGSMITH_*`, `REDIS_URL`, and `OPENAI_API_KEY` fields.
+
 ## [0.8.0] - 2026-05-16
+
 ### Added
 - Scaffolded `agentic_AI` directory structure in `backend/` including empty components for agents, nodes, and tools.
 - Set up foundational modules (`ticket_state.py`, `redis_checkpointer.py`) to prepare for LangGraph integration.
