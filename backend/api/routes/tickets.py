@@ -32,6 +32,17 @@ router = APIRouter(prefix="/tickets", tags=["tickets"])
 # ─── Background Task ─────────────────────────────────────────────────────────
 
 
+import asyncio
+from agentic_AI.ticket_state import TicketState
+
+async def _invoke_graph(state: TicketState, config: dict) -> None:
+    from agentic_AI.checkpointer import get_checkpointer
+    from agentic_AI.agents.orchestration_agent import get_parent_graph
+    
+    with get_checkpointer() as checkpointer:
+        graph = get_parent_graph(checkpointer)
+        await graph.ainvoke(state.model_dump(), config=config)
+
 def _process_ticket_submission(
     ticket_id: uuid.UUID,
     file_contents: list[tuple[bytes, str, str]],
@@ -40,8 +51,7 @@ def _process_ticket_submission(
     Background task that:
     1. Uploads each photo to Supabase Storage.
     2. Updates the ticket with media_urls.
-    3. Sets status to OPEN.
-    4. Triggers intake agent placeholder.
+    3. Triggers LangGraph orchestration workflow.
 
     Runs in its own DB session (independent of the request lifecycle).
     """
@@ -67,18 +77,38 @@ def _process_ticket_submission(
             return
 
         ticket.media_urls = media_urls if media_urls else None
-        ticket.status = "OPEN"
         db.commit()
 
-        # ── Placeholder: trigger intake agent ──
-        logger.info("Ticket %s is now OPEN — intake agent placeholder.", ticket_id)
+        # Build initial state and trigger graph
+        prop: Property | None = db.get(Property, ticket.property_id)
+        if not prop:
+            logger.error("Property not found for ticket %s", ticket_id)
+            return
+
+        initial_state = TicketState(
+            ticket_id=str(ticket.id),
+            tenant_id=str(ticket.tenant_id),
+            property_id=str(ticket.property_id),
+            pm_id=str(prop.pm_id),
+        )
+        config = {"configurable": {"thread_id": f"ticket-{ticket.id}"}}
+        
+        asyncio.run(_invoke_graph(initial_state, config))
+        logger.info("Graph completed for ticket %s", ticket_id)
 
     except Exception:
         db.rollback()
         logger.exception("Background processing failed for ticket %s", ticket_id)
+        try:
+            # Reopen session state handle to update error state safely
+            err_ticket = db.get(Ticket, ticket_id)
+            if err_ticket:
+                err_ticket.status = "ERROR"
+                db.commit()
+        except:
+            pass
     finally:
         db.close()
-
 
 # ─── Endpoints ────────────────────────────────────────────────────────────────
 

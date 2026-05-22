@@ -1,0 +1,5 @@
+- [ ] Create backend/agentic_AI/nodes/intake/__init__.py
+- [ ] Create backend/agentic_AI/nodes/intake.py with classify_node and persist_triage_node
+- [ ] Create backend/agentic_AI/agents/intake_agent.py setting up the intake subgraph
+- [ ] Create backend/agentic_AI/agents/orchestration_agent.py setting up the parent graph
+- [ ] Update backend/api/routes/tickets.py to trigger the graph synchronously from the background task

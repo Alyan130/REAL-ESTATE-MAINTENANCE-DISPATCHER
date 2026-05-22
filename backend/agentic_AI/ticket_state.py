@@ -14,7 +14,7 @@ class TicketState(BaseModel):
     priority: Optional[str] = Field(default=None, description="P1/P2/P3/P4")
     category: Optional[str] = Field(default=None, description="plumbing/electrical etc")
     ai_summary: Optional[str] = Field(default=None, description="intake analysis")
-    requires_pm: Optional[bool] = Field(default=None, description="intake decision")
+    requires_pm_approval: Optional[bool] = Field(default=None, description="intake decision")
     pm_notes: Optional[str] = Field(default=None, description="notes for PM")
 
     # --- PM Decision ---
