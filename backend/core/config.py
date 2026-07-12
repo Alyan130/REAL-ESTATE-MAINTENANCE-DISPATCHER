@@ -37,5 +37,17 @@ class Settings(BaseSettings):
     SUPABASE_KEY: str = ""
     SUPABASE_STORAGE_BUCKET: str = "tickets"
 
+    # LangSmith Tracing
+    LANGSMITH_TRACING: bool = True
+    LANGSMITH_ENDPOINT: str = "https://api.smith.langchain.com"
+    LANGSMITH_API_KEY: str = ""
+    LANGSMITH_PROJECT: str = ""
+
+    # Redis (Upstash TCP)
+    REDIS_URL: str = ""
+
+    # OpenAI
+    OPENAI_API_KEY: str = ""
+
 
 settings = Settings()
