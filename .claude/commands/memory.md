@@ -5,13 +5,13 @@ description: Invoked When user wants to get context of project changes and curre
 
 
 ## Purpose
-Gives the agent a fast summary of the project's current state from `CHANGELOG.md`.
+Gives the agent a fast summary of the project's current state from `CHANGE-LOG.md`.
 Used to onboard a new agent without burning token limit on full history.
 
 ## Steps
 
-### 1. Read CHANGELOG.md
-Open and read the full `CHANGELOG.md` from the project root.
+### 1. Read CHANGE-LOG.md
+Open and read the full `CHANGE-LOG.md` from the project root.
 
 ### 2. Summarize Old History (1 line)
 Everything older than the last 3–4 days back gets collapsed into a summary.
@@ -27,7 +27,7 @@ List the most recent versions in detail:
 ```
 ## Project Context — [today's date]
 
-**History (summarized):** [5-6 lines of everything older]
+**History (summarized):** [8-10 lines of everything older]
 
 **Recent Changes:**
 - [version] [date]: [what changed + anything important to know]
@@ -38,6 +38,4 @@ List the most recent versions in detail:
 
 ## Rules
 - Never output the full changelog — summarize old, detail recent.
-- Recent = last 3–4 days back only.
-- If there are no recent changes, say so explicitly.
 - Keep all context concise and clear.

@@ -38,10 +38,99 @@ from agentic_AI.ticket_state import TicketState
 async def _invoke_graph(state: TicketState, config: dict) -> None:
     from agentic_AI.checkpointer import get_checkpointer
     from agentic_AI.agents.orchestration_agent import get_parent_graph
-    
+
     with get_checkpointer() as checkpointer:
         graph = get_parent_graph(checkpointer)
         await graph.ainvoke(state.model_dump(), config=config)
+
+
+async def _resume_approval_graph(ticket_id: uuid.UUID, approved: bool) -> bool:
+    """
+    Resume the paused approval graph via Command(resume=...) on the ticket's thread.
+
+    Returns True if a live interrupt was resumed, False if there is no paused
+    checkpoint to resume (e.g. it was evicted) so the caller can fall back.
+    """
+    from langgraph.types import Command
+    from agentic_AI.checkpointer import get_checkpointer
+    from agentic_AI.agents.orchestration_agent import get_parent_graph
+
+    config = {"configurable": {"thread_id": f"ticket-{ticket_id}"}}
+    with get_checkpointer() as checkpointer:
+        graph = get_parent_graph(checkpointer)
+        snapshot = await graph.aget_state(config)
+        # `.next` is non-empty only when the graph is paused with pending work
+        # (i.e. sitting at the interrupt). Empty ⇒ no live checkpoint to resume.
+        if not snapshot or not snapshot.next:
+            return False
+        await graph.ainvoke(Command(resume={"approved": approved}), config=config)
+        return True
+
+
+def _dispatch_from_db(ticket_id: uuid.UUID) -> None:
+    """
+    Fallback dispatch when no live checkpoint exists: rebuild TicketState from the
+    DB (hydrating `category`, which vendor matching keys off) and run dispatch_graph.
+    """
+    from agentic_AI.agents.dispatch_agent import dispatch_graph
+
+    db: Session = SessionLocal()
+    try:
+        ticket: Ticket | None = db.get(Ticket, ticket_id)
+        if ticket is None:
+            logger.error("Ticket %s not found for fallback dispatch", ticket_id)
+            return
+        prop: Property | None = db.get(Property, ticket.property_id)
+        if prop is None:
+            logger.error("Property not found for ticket %s during fallback dispatch", ticket_id)
+            return
+
+        state = TicketState(
+            ticket_id=str(ticket.id),
+            tenant_id=str(ticket.tenant_id),
+            property_id=str(ticket.property_id),
+            pm_id=str(prop.pm_id),
+            category=ticket.category,
+            priority=ticket.priority,
+            ai_summary=ticket.ai_summary,
+            pm_approved=True,
+        )
+        config = {"configurable": {"thread_id": f"dispatch-{ticket.id}"}}
+        asyncio.run(dispatch_graph.ainvoke(state.model_dump(), config=config))
+        logger.info("Fallback dispatch completed for ticket %s", ticket_id)
+    finally:
+        db.close()
+
+
+def _mark_needs_attention(ticket_id: uuid.UUID) -> None:
+    """Surface an unrecoverable approval failure to the PM — never fail silently."""
+    db: Session = SessionLocal()
+    try:
+        ticket: Ticket | None = db.get(Ticket, ticket_id)
+        if ticket:
+            ticket.status = "NEEDS_ATTENTION"
+            db.commit()
+    except Exception:
+        logger.exception("Failed to mark ticket %s NEEDS_ATTENTION", ticket_id)
+    finally:
+        db.close()
+
+
+def _run_approval(ticket_id: uuid.UUID) -> None:
+    """
+    Background task for PM approval: resume the paused graph; if the checkpoint is
+    gone, fall back to a fresh DB-based dispatch. Escalate on unrecoverable failure.
+    """
+    try:
+        resumed = asyncio.run(_resume_approval_graph(ticket_id, approved=True))
+        if resumed:
+            logger.info("Resumed approval graph for ticket %s", ticket_id)
+            return
+        logger.warning("No live checkpoint for ticket %s — falling back to DB dispatch", ticket_id)
+        _dispatch_from_db(ticket_id)
+    except Exception:
+        logger.exception("Approval processing failed for ticket %s", ticket_id)
+        _mark_needs_attention(ticket_id)
 
 def _process_ticket_submission(
     ticket_id: uuid.UUID,
@@ -310,6 +399,84 @@ def update_ticket_status(
         )
 
     ticket.status = body.status
+    db.commit()
+    db.refresh(ticket)
+
+    return StatusUpdateResponse(id=ticket.id, status=ticket.status)
+
+
+@router.post("/{ticket_id}/approve", response_model=StatusUpdateResponse, status_code=status.HTTP_202_ACCEPTED)
+def approve_ticket(
+    ticket_id: uuid.UUID,
+    background_tasks: BackgroundTasks,
+    pm: PMUserDep,
+    db: DbDep,
+) -> StatusUpdateResponse:
+    """
+    PM approves a ticket, triggering vendor dispatch in the background.
+
+    Used for P2/P3/P4 tickets sitting at PENDING_APPROVAL (P1 auto-dispatches
+    during intake and never reaches here).
+    """
+    ticket: Ticket | None = db.get(Ticket, ticket_id)
+    if ticket is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found.")
+
+    prop: Property | None = db.get(Property, ticket.property_id)
+    if prop is None or prop.pm_id != pm.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This ticket does not belong to your properties.",
+        )
+
+    # Guard: only a ticket actually awaiting approval may be approved. Prevents a
+    # re-approve from resuming/dispatching an already-processed ticket.
+    if ticket.status != "PENDING_APPROVAL":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Ticket is not awaiting approval (status: {ticket.status}).",
+        )
+
+    ticket.status = "DISPATCHING"
+    db.commit()
+    db.refresh(ticket)
+
+    background_tasks.add_task(_run_approval, ticket_id)
+
+    return StatusUpdateResponse(id=ticket.id, status=ticket.status)
+
+
+@router.post("/{ticket_id}/reject", response_model=StatusUpdateResponse)
+def reject_ticket(
+    ticket_id: uuid.UUID,
+    pm: PMUserDep,
+    db: DbDep,
+) -> StatusUpdateResponse:
+    """
+    PM rejects a ticket — no dispatch, ticket is cancelled.
+
+    A terminal state-set, written synchronously here rather than routed through
+    the graph — it must not depend on a live checkpoint. The paused graph is left
+    to expire via its TTL; the PENDING_APPROVAL guard makes it unresumable anyway.
+    """
+    ticket: Ticket | None = db.get(Ticket, ticket_id)
+    if ticket is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Ticket not found.")
+
+    prop: Property | None = db.get(Property, ticket.property_id)
+    if prop is None or prop.pm_id != pm.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="This ticket does not belong to your properties.",
+        )
+
+    if ticket.status != "PENDING_APPROVAL":
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail=f"Ticket is not awaiting approval (status: {ticket.status}).",
+        )
+
+    ticket.status = "CANCELLED"
     db.commit()
     db.refresh(ticket)
 

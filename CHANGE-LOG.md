@@ -1,3 +1,28 @@
+## [0.11.0] - 2026-07-13
+### Changed
+- **PM approval is now native LangGraph human-in-the-loop.** The orchestration graph pauses at a new `human_approval_node` via `interrupt()` (state persisted to the Redis checkpointer on thread `ticket-{id}`) instead of ending at `notify_pm`. `POST /tickets/{id}/approve` **resumes the same graph** with `Command(resume={"approved": True})` — the paused state (incl. `category`) is preserved, removing the DB-rehydration step on the happy path.
+- `agentic_AI/agents/orchestration_agent.py` — added `human_approval_node`, `route_on_decision`, and `cancel_node`; rewired `notify_pm → human_approval → dispatch | cancel`. P1 path unchanged.
+- `agentic_AI/checkpointer.py` — `RedisSaver` now configured with a **3-day TTL** (`CHECKPOINT_TTL`, `refresh_on_read=True`) so paused approval workflows survive until the PM acts.
+- `api/routes/tickets.py` — replaced the fresh-invocation `_run_dispatch` with `_run_approval`: resume via `_resume_approval_graph` (detects a live interrupt through `graph.aget_state(...).next`), **DB-fallback** to `dispatch_graph` if the checkpoint was evicted, and `NEEDS_ATTENTION` escalation on unrecoverable failure. `/approve` and `/reject` now guard `status == PENDING_APPROVAL` (409 otherwise); `/reject` writes `CANCELLED` synchronously rather than through the graph.
+### Notes
+- Reject deliberately bypasses the graph — a terminal state-set must not depend on a live checkpoint; the paused graph expires via TTL and the guard makes it unresumable.
+- Durability tradeoff: a paused workflow lives in Redis; the DB-fallback + 3-day TTL are the mitigation for checkpoint loss.
+
+## [0.10.0] - 2026-07-13
+### Added
+- **Dispatch agent** (`agentic_AI/agents/dispatch_agent.py`) — a LangGraph subgraph: `select_vendor → dispatch_job | escalate_to_pm`. Selects the single best-matching vendor for an approved/P1 ticket, creates a `PENDING` `VendorJob`, and emails the vendor a job offer; escalates to the PM when no vendor is available.
+- `agentic_AI/tools/dispatch.py` — `find_best_vendor()` (deterministic filter by pm/category/active/capacity, ranked by rating) and `create_vendor_job()`. Vendor exclusion for "already contacted" is driven by the `VendorJob` table (authoritative across the separate P1 and PM-approval graph invocations), not by graph reducer state.
+- `agentic_AI/nodes/dispatch.py` — `select_vendor_node`, `route_after_selection`, `dispatch_job_node`, `escalate_to_pm_node`, following the intake node convention (per-node `SessionLocal`, errors surfaced as `{"error": ...}` state).
+- `core/categories.py` — shared `TicketCategory`/`VendorCategory` `Literal` vocabulary so intake output and vendor input cannot drift. `"other"` is a ticket-only catch-all, excluded from vendor categories.
+- `core/email.py::send_job_offer_email()` — Resend sender for vendor job offers, modeled on `send_invite_email` (sync, fire-and-forget).
+- `POST /tickets/{id}/approve` and `POST /tickets/{id}/reject` in `api/routes/tickets.py`. Approve triggers dispatch in the background via `_run_dispatch`, which rebuilds `TicketState` from the DB (hydrating `category`, required for vendor matching). Reject → `CANCELLED`.
+### Changed
+- `agentic_AI/agents/orchestration_agent.py` — replaced the `trigger_dispatch_node` placeholder with the real `dispatch_graph` embedded as a subgraph node.
+- `agentic_AI/output_schemas.py` — `IntakeClassification.category` constrained to `TicketCategory`.
+- `schemas/vendors.py` — `CreateVendorRequest.categories` constrained to `list[VendorCategory]` (off-vocabulary categories now rejected with 422; no DB migration — column stays `ARRAY(String)`).
+### Notes
+- Retry-on-decline (contact the next vendor when one declines) is deferred to the Negotiation agent; the DB-based exclusion and escalation that support it are in place. `VendorJob` `DECLINED`/`QUOTED` transitions land with negotiation and need no migration (`status` is free `String(20)`).
+
 ## [0.9.0] - 2026-05-19
 ### Added
 - `TicketState` refactored from `TypedDict` to a strict Pydantic `BaseModel` with proper LangGraph reducers (`Annotated[list, operator.add]`) on `vendors_contacted`, `negotiation_messages`, and `dispatch_attempts` — prevents list overwrites in multi-step agent loops.

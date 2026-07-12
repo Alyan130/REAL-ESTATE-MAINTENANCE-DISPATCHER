@@ -2,13 +2,16 @@
 backend/agentic_AI/agents/orchestration_agent.py
 """
 import logging
+from datetime import datetime
 from typing import Dict, Any
 
 from langgraph.graph import StateGraph, START, END
 from langgraph.graph.graph import CompiledGraph
+from langgraph.types import interrupt
 
 from agentic_AI.ticket_state import TicketState
 from agentic_AI.agents.intake_agent import intake_graph
+from agentic_AI.agents.dispatch_agent import dispatch_graph
 from database import SessionLocal
 from models.notification import Notification
 
@@ -42,9 +45,49 @@ async def notify_pm_node(state: TicketState) -> Dict[str, Any]:
     finally:
         db.close()
 
-async def trigger_dispatch_node(state: TicketState) -> Dict[str, Any]:
-    logger.info("trigger_dispatch_node placeholder executing")
-    return {"current_status": "DISPATCHING"}
+async def human_approval_node(state: TicketState) -> Dict[str, Any]:
+    """
+    Human-in-the-loop pause point. The graph freezes here (state saved to the
+    Redis checkpointer) until the PM resumes it via Command(resume=...) from the
+    /approve or /reject endpoint.
+
+    interrupt() MUST be the first statement — on resume the whole node re-runs
+    from the top, so nothing side-effecting may precede it. The PM-facing
+    "question" was already written by notify_pm_node (a separate, completed node
+    that does not re-run), so this node only records the decision.
+    """
+    decision = interrupt(
+        {
+            "ticket_id": state.ticket_id,
+            "ai_summary": state.ai_summary,
+            "action": "approve_or_reject",
+        }
+    )
+    return {"pm_approved": bool(decision.get("approved"))}
+
+
+def route_on_decision(state: TicketState) -> str:
+    return "dispatch" if state.pm_approved else "cancel"
+
+
+async def cancel_node(state: TicketState) -> Dict[str, Any]:
+    """PM rejected the ticket — mark it CANCELLED. (Reached only via graph resume.)"""
+    db = SessionLocal()
+    try:
+        from models.ticket import Ticket
+        ticket = db.get(Ticket, state.ticket_id)
+        if ticket:
+            ticket.status = "CANCELLED"
+            ticket.updated_at = datetime.utcnow()
+        db.commit()
+        return {"current_status": "CANCELLED"}
+    except Exception as e:
+        db.rollback()
+        logger.exception("cancel_node error for ticket %s: %s", state.ticket_id, e)
+        return {"error": str(e)}
+    finally:
+        db.close()
+
 
 def route_after_intake(state: TicketState) -> str:
     if state.error is not None:
@@ -57,7 +100,9 @@ builder = StateGraph(TicketState)
 
 builder.add_node("intake", intake_graph)
 builder.add_node("notify_pm", notify_pm_node)
-builder.add_node("trigger_dispatch_node", trigger_dispatch_node)
+builder.add_node("human_approval", human_approval_node)
+builder.add_node("cancel", cancel_node)
+builder.add_node("dispatch", dispatch_graph)
 
 builder.add_edge(START, "intake")
 builder.add_conditional_edges(
@@ -65,12 +110,23 @@ builder.add_conditional_edges(
     route_after_intake,
     {
         END: END,
-        "dispatch": "trigger_dispatch_node",
+        "dispatch": "dispatch",
         "notify_pm": "notify_pm"
     }
 )
-builder.add_edge("notify_pm", END)
-builder.add_edge("trigger_dispatch_node", END)
+# notify_pm surfaces the approval request, then the graph pauses at human_approval
+# until the PM resumes it. On resume it routes to dispatch (approved) or cancel.
+builder.add_edge("notify_pm", "human_approval")
+builder.add_conditional_edges(
+    "human_approval",
+    route_on_decision,
+    {
+        "dispatch": "dispatch",
+        "cancel": "cancel"
+    }
+)
+builder.add_edge("cancel", END)
+builder.add_edge("dispatch", END)
 
 def get_parent_graph(checkpointer=None) -> CompiledGraph:
     return builder.compile(checkpointer=checkpointer)

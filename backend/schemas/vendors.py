@@ -14,12 +14,16 @@ import uuid
 
 from pydantic import BaseModel, EmailStr
 
+from core.categories import VendorCategory
+
 
 class CreateVendorRequest(BaseModel):
     name: str
     email: EmailStr
     phone: str | None = None
-    categories: list[str] | None = None
+    # Constrained to the shared vendor vocabulary — an off-list category (e.g.
+    # "HVAC" or "air conditioning") is rejected at the API edge (422).
+    categories: list[VendorCategory] | None = None
     max_concurrent_jobs: int = 3
 
 

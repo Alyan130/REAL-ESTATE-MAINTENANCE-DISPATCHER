@@ -1,0 +1,14 @@
+- [x] Add shared category vocabulary constant (core/categories.py)
+- [x] Wire category Literal into intake output schema and vendor create schema
+- [x] Add send_job_offer_email to core/email.py
+- [x] Build dispatch tools (find_best_vendor, create_vendor_job)
+- [x] Build dispatch nodes (select_vendor, route, dispatch_job, escalate_to_pm)
+- [x] Build dispatch subgraph (dispatch_graph)
+- [x] Wire dispatch subgraph into orchestrator
+- [x] Add human_approval interrupt node, route_on_decision, and cancel node
+- [x] Rewire orchestrator: notify_pm to human_approval to dispatch or cancel
+- [x] Configure Redis checkpointer with 3-day TTL
+- [x] Add _resume_approval_graph with aget_state.next detection
+- [x] Add DB-fallback dispatch and NEEDS_ATTENTION escalation
+- [x] Refactor approve endpoint to resume, reject to synchronous cancel, with PENDING_APPROVAL guards
+- [x] Syntax-check changed files and update CHANGE-LOG
