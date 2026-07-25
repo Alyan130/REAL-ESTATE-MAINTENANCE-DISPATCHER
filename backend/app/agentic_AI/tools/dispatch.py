@@ -14,8 +14,8 @@ import uuid
 
 from sqlalchemy.orm import Session
 
-from models.vendor import Vendor
-from models.vendor_job import VendorJob
+from app.models.vendor import Vendor
+from app.models.vendor_job import VendorJob
 
 # Statuses that count against a vendor's concurrent-job capacity.
 ACTIVE_JOB_STATUSES = ["PENDING", "APPROVED"]

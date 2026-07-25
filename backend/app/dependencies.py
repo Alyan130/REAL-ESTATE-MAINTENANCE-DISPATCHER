@@ -1,57 +1,61 @@
 """
-api/deps.py
+app/dependencies.py
 
-Re-usable FastAPI dependencies.
+Shared FastAPI dependencies: the database session, the authenticated user, role
+guards, and a provider per service.
 """
 from __future__ import annotations
 
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
-from core.security import decode_token
-from database import get_db
-from models.user import User
+from app.core.security import decode_token
+from app.database import get_db
+from app.exceptions import ForbiddenError, NotAuthenticatedError
+from app.models.user import User
+from app.services.auth_service import AuthService
+from app.services.property_service import PropertyService
+from app.services.tenant_service import TenantService
+from app.services.ticket_service import TicketService
+from app.services.vendor_service import VendorService
 
-_bearer = HTTPBearer()
+# auto_error=False so a missing header becomes our own 401 NOT_AUTHENTICATED
+# rather than HTTPBearer's bare 403.
+_bearer = HTTPBearer(auto_error=False)
 
 DbDep = Annotated[Session, Depends(get_db)]
-BearerDep = Annotated[HTTPAuthorizationCredentials, Depends(_bearer)]
+BearerDep = Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)]
 
 
-def get_current_user(
-    credentials: BearerDep,
-    db: DbDep,
-) -> User:
+# ─── Authentication ──────────────────────────────────────────────────────────
+
+
+def get_current_user(credentials: BearerDep, db: DbDep) -> User:
     """
-    FastAPI dependency that:
-    1. Extracts the Bearer token from the Authorization header.
-    2. Decodes and verifies the token (raises 401 on failure).
-    3. Loads the user from the database by `sub` claim.
-    4. Rejects inactive users with 401.
-    5. Returns the full User ORM object.
+    Decode the Bearer token and load its user.
+
+    Every failure — missing header, bad signature, expired, unknown or disabled
+    user — is reported identically, so the response never confirms which.
     """
-    _401 = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials.",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
+    if credentials is None:
+        raise NotAuthenticatedError()
 
     try:
         payload = decode_token(credentials.credentials)
     except (jwt.ExpiredSignatureError, jwt.PyJWTError):
-        raise _401
+        raise NotAuthenticatedError()
 
     user_id: str | None = payload.get("sub")
     if user_id is None:
-        raise _401
+        raise NotAuthenticatedError()
 
     user: User | None = db.get(User, user_id)
     if user is None or not user.is_active:
-        raise _401
+        raise NotAuthenticatedError()
 
     return user
 
@@ -59,14 +63,51 @@ def get_current_user(
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
 
 
+# ─── Role guards ─────────────────────────────────────────────────────────────
+
+
 def require_pm(user: CurrentUserDep) -> User:
-    """Raise 403 if the authenticated user is not a property manager."""
     if user.role != "pm":
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Property manager access required.",
-        )
+        raise ForbiddenError("Property manager access required.")
+    return user
+
+
+def require_tenant(user: CurrentUserDep) -> User:
+    """Only tenants file tickets — a PM or vendor cannot report on their behalf."""
+    if user.role != "tenant":
+        raise ForbiddenError("Only tenants can create tickets.")
     return user
 
 
 PMUserDep = Annotated[User, Depends(require_pm)]
+TenantUserDep = Annotated[User, Depends(require_tenant)]
+
+
+# ─── Services ────────────────────────────────────────────────────────────────
+
+
+def get_auth_service(db: DbDep) -> AuthService:
+    return AuthService(db)
+
+
+def get_property_service(db: DbDep) -> PropertyService:
+    return PropertyService(db)
+
+
+def get_tenant_service(db: DbDep) -> TenantService:
+    return TenantService(db)
+
+
+def get_vendor_service(db: DbDep) -> VendorService:
+    return VendorService(db)
+
+
+def get_ticket_service(db: DbDep) -> TicketService:
+    return TicketService(db)
+
+
+AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
+PropertyServiceDep = Annotated[PropertyService, Depends(get_property_service)]
+TenantServiceDep = Annotated[TenantService, Depends(get_tenant_service)]
+VendorServiceDep = Annotated[VendorService, Depends(get_vendor_service)]
+TicketServiceDep = Annotated[TicketService, Depends(get_ticket_service)]

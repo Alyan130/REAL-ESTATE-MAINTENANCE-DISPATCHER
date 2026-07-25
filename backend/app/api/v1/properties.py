@@ -1,119 +1,51 @@
 """
-api/routes/properties.py
+app/api/v1/properties.py
 
-Property CRUD routes for property managers.
+Property CRUD for property managers.
 """
 from __future__ import annotations
 
 import uuid
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, status
 
-from api.deps import DbDep, PMUserDep
-from models.property import Property
-from schemas.properties import CreatePropertyRequest, PropertyResponse
+from app.dependencies import PMUserDep, PropertyServiceDep
+from app.schemas.properties import CreatePropertyRequest, PropertyResponse
 
 router = APIRouter(prefix="/properties", tags=["properties"])
-
-
-# ─── Endpoints ───────────────────────────────────────────────────────────────
 
 
 @router.post("/", response_model=PropertyResponse, status_code=status.HTTP_201_CREATED)
 def create_property(
     body: CreatePropertyRequest,
     pm: PMUserDep,
-    db: DbDep,
+    service: PropertyServiceDep,
 ) -> PropertyResponse:
     """Create a new property owned by the authenticated PM."""
-    try:
-        prop = Property(
-            pm_id=pm.id,
-            name=body.name,
-            address=body.address,
-        )
-        db.add(prop)
-        db.commit()
-        db.refresh(prop)
-
-        return PropertyResponse.model_validate(prop)
-    except HTTPException:
-        raise
-    except Exception as exc:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to create property: {exc}",
-        )
+    return service.create(pm_id=pm.id, data=body)
 
 
 @router.get("/", response_model=list[PropertyResponse])
-def list_properties(
-    pm: PMUserDep,
-    db: DbDep,
-) -> list[PropertyResponse]:
+def list_properties(pm: PMUserDep, service: PropertyServiceDep) -> list[PropertyResponse]:
     """List all active properties for the authenticated PM."""
-    try:
-        properties = (
-            db.query(Property)
-            .filter(Property.pm_id == pm.id, Property.is_active.is_(True))
-            .order_by(Property.created_at.desc())
-            .all()
-        )
-        return [PropertyResponse.model_validate(p) for p in properties]
-    except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to list properties: {exc}",
-        )
+    return service.list_for_pm(pm.id)
 
 
 @router.get("/{property_id}", response_model=PropertyResponse)
 def get_property(
     property_id: uuid.UUID,
     pm: PMUserDep,
-    db: DbDep,
+    service: PropertyServiceDep,
 ) -> PropertyResponse:
     """Get a single property by ID (must belong to the authenticated PM)."""
-    try:
-        prop: Property | None = db.get(Property, property_id)
-        if prop is None or prop.pm_id != pm.id or not prop.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Property not found.",
-            )
-        return PropertyResponse.model_validate(prop)
-    except HTTPException:
-        raise
-    except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to get property: {exc}",
-        )
+    return service.get_for_pm(property_id, pm.id)
 
 
 @router.delete("/{property_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_property(
     property_id: uuid.UUID,
     pm: PMUserDep,
-    db: DbDep,
+    service: PropertyServiceDep,
 ) -> None:
-    """Soft-delete a property (set is_active=False)."""
-    try:
-        prop: Property | None = db.get(Property, property_id)
-        if prop is None or prop.pm_id != pm.id or not prop.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Property not found.",
-            )
-
-        prop.is_active = False
-        db.commit()
-    except HTTPException:
-        raise
-    except Exception as exc:
-        db.rollback()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to delete property: {exc}",
-        )
+    """Soft-delete a property. Its tickets and tenants are retained."""
+    service.delete(property_id, pm.id)

@@ -9,7 +9,7 @@ import logging
 
 import resend
 
-from core.config import settings
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 

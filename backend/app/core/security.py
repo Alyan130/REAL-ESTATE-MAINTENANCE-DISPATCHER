@@ -12,7 +12,7 @@ from typing import Any
 import bcrypt
 import jwt
 
-from core.config import settings
+from app.config import settings
 
 # ─── Token lifetime map ────────────────────────────────────────────────────────
 _TOKEN_LIFETIMES: dict[str, timedelta] = {

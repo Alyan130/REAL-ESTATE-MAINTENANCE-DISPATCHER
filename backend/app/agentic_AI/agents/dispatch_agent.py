@@ -14,8 +14,8 @@ import logging
 
 from langgraph.graph import StateGraph, START, END
 
-from agentic_AI.ticket_state import TicketState
-from agentic_AI.nodes.dispatch import (
+from app.agentic_AI.ticket_state import TicketState
+from app.agentic_AI.nodes.dispatch import (
     dispatch_job_node,
     escalate_to_pm_node,
     route_after_selection,

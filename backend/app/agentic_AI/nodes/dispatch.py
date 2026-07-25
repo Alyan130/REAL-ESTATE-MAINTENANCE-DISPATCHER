@@ -15,13 +15,13 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict
 
-from core.email import send_job_offer_email
-from database import SessionLocal
-from models.notification import Notification
-from models.ticket import Ticket
-from models.vendor import Vendor
-from agentic_AI.ticket_state import TicketState
-from agentic_AI.tools.dispatch import create_vendor_job, find_best_vendor
+from app.core.email import send_job_offer_email
+from app.database import SessionLocal
+from app.models.notification import Notification
+from app.models.ticket import Ticket
+from app.models.vendor import Vendor
+from app.agentic_AI.ticket_state import TicketState
+from app.agentic_AI.tools.dispatch import create_vendor_job, find_best_vendor
 
 logger = logging.getLogger(__name__)
 

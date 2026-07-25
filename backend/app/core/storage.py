@@ -9,7 +9,7 @@ import uuid
 import logging
 from supabase import create_client, Client
 
-from core.config import settings
+from app.config import settings
 
 logger = logging.getLogger(__name__)
 

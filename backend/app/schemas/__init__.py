@@ -3,16 +3,16 @@ schemas/__init__.py
 
 Re-exports all Pydantic schemas for convenient top-level imports.
 """
-from schemas.auth import AcceptInviteRequest, LoginRequest, ResendInviteResponse, TokenResponse
-from schemas.properties import CreatePropertyRequest, PropertyResponse
-from schemas.tenants import CreateTenantRequest, TenantInviteResponse, TenantResponse
-from schemas.tickets import (
+from app.schemas.auth import AcceptInviteRequest, LoginRequest, ResendInviteResponse, TokenResponse
+from app.schemas.properties import CreatePropertyRequest, PropertyResponse
+from app.schemas.tenants import CreateTenantRequest, TenantInviteResponse, TenantResponse
+from app.schemas.tickets import (
     StatusUpdateResponse,
     TicketCreatedResponse,
     TicketResponse,
     UpdateStatusRequest,
 )
-from schemas.vendors import CreateVendorRequest, VendorInviteResponse, VendorResponse
+from app.schemas.vendors import CreateVendorRequest, VendorInviteResponse, VendorResponse
 
 __all__ = [
     # auth

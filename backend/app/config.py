@@ -32,6 +32,16 @@ class Settings(BaseSettings):
     # Frontend base URL (used for invite links)
     BASE_URL: str = "https://resend.dev"
 
+    # Browser origins allowed to call this API (comma-separated).
+    # The frontend is a separate origin, so without this every request is
+    # blocked by CORS before it reaches a route.
+    CORS_ORIGINS: str = "http://localhost:3000"
+
+    @property
+    def cors_origins_list(self) -> list[str]:
+        """CORS_ORIGINS parsed into a list, with blanks dropped."""
+        return [origin.strip() for origin in self.CORS_ORIGINS.split(",") if origin.strip()]
+
     # Supabase Storage
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""

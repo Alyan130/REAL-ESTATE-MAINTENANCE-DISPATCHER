@@ -1,7 +1,7 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from core.config import settings
+from app.config import settings
 
 # Use connection_args for pgbouncer compatibility (no prepared statements)
 engine = create_engine(

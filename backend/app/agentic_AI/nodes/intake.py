@@ -7,11 +7,11 @@ from typing import Dict, Any, List
 from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 
-from core.config import settings
-from database import SessionLocal
-from models.ticket import Ticket
-from agentic_AI.ticket_state import TicketState
-from agentic_AI.output_schemas import IntakeClassification
+from app.config import settings
+from app.database import SessionLocal
+from app.models.ticket import Ticket
+from app.agentic_AI.ticket_state import TicketState
+from app.agentic_AI.output_schemas import IntakeClassification
 
 logger = logging.getLogger(__name__)
 

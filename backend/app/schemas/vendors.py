@@ -14,7 +14,7 @@ import uuid
 
 from pydantic import BaseModel, EmailStr
 
-from core.categories import VendorCategory
+from app.core.categories import VendorCategory
 
 
 class CreateVendorRequest(BaseModel):

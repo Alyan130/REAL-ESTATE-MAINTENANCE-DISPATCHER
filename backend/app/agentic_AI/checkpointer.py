@@ -4,7 +4,7 @@ checkpointer.py
 LangGraph persistence layer using Upstash Redis over TCP.
 
 Usage:
-    from agentic_AI.checkpointer import get_checkpointer
+    from app.agentic_AI.checkpointer import get_checkpointer
 
     with get_checkpointer() as checkpointer:
         graph = builder.compile(checkpointer=checkpointer)
@@ -16,7 +16,7 @@ from contextlib import contextmanager
 import redis
 from langgraph.checkpoint.redis import RedisSaver
 
-from core.config import settings
+from app.config import settings
 
 # Paused human-in-the-loop workflows (a ticket awaiting PM approval) live only in
 # the checkpoint until resumed. Keep them resumable for 3 days so a PM has a

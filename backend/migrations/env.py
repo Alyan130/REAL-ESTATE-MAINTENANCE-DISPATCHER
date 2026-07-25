@@ -13,7 +13,7 @@ from sqlalchemy import engine_from_config, pool
 from alembic import context
 
 # Import Base and all models (so autogenerate discovers them)
-from models import Base  # noqa: F401 - triggers all model imports via __init__.py
+from app.models import Base  # noqa: F401 - triggers all model imports via __init__.py
 
 config = context.config
 

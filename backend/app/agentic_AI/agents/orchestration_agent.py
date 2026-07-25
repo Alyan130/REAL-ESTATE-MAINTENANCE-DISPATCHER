@@ -6,14 +6,16 @@ from datetime import datetime
 from typing import Dict, Any
 
 from langgraph.graph import StateGraph, START, END
-from langgraph.graph.graph import CompiledGraph
+# langgraph 1.x dropped langgraph.graph.graph.CompiledGraph; CompiledStateGraph
+# is its replacement for a compiled StateGraph.
+from langgraph.graph.state import CompiledStateGraph
 from langgraph.types import interrupt
 
-from agentic_AI.ticket_state import TicketState
-from agentic_AI.agents.intake_agent import intake_graph
-from agentic_AI.agents.dispatch_agent import dispatch_graph
-from database import SessionLocal
-from models.notification import Notification
+from app.agentic_AI.ticket_state import TicketState
+from app.agentic_AI.agents.intake_agent import intake_graph
+from app.agentic_AI.agents.dispatch_agent import dispatch_graph
+from app.database import SessionLocal
+from app.models.notification import Notification
 
 logger = logging.getLogger(__name__)
 
@@ -31,7 +33,7 @@ async def notify_pm_node(state: TicketState) -> Dict[str, Any]:
         )
         db.add(notification)
         
-        from models.ticket import Ticket
+        from app.models.ticket import Ticket
         ticket = db.get(Ticket, state.ticket_id)
         if ticket:
             ticket.status = "PENDING_APPROVAL"
@@ -74,7 +76,7 @@ async def cancel_node(state: TicketState) -> Dict[str, Any]:
     """PM rejected the ticket — mark it CANCELLED. (Reached only via graph resume.)"""
     db = SessionLocal()
     try:
-        from models.ticket import Ticket
+        from app.models.ticket import Ticket
         ticket = db.get(Ticket, state.ticket_id)
         if ticket:
             ticket.status = "CANCELLED"
@@ -114,8 +116,7 @@ builder.add_conditional_edges(
         "notify_pm": "notify_pm"
     }
 )
-# notify_pm surfaces the approval request, then the graph pauses at human_approval
-# until the PM resumes it. On resume it routes to dispatch (approved) or cancel.
+
 builder.add_edge("notify_pm", "human_approval")
 builder.add_conditional_edges(
     "human_approval",
@@ -128,5 +129,5 @@ builder.add_conditional_edges(
 builder.add_edge("cancel", END)
 builder.add_edge("dispatch", END)
 
-def get_parent_graph(checkpointer=None) -> CompiledGraph:
+def get_parent_graph(checkpointer=None) -> CompiledStateGraph:
     return builder.compile(checkpointer=checkpointer)

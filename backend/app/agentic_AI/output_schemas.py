@@ -1,6 +1,6 @@
 from pydantic import BaseModel, Field
 
-from core.categories import TicketCategory
+from app.core.categories import TicketCategory
 
 class IntakeClassification(BaseModel):
     category: TicketCategory = Field(description="one of: plumbing, electrical, hvac, structural, appliance, pest, cleaning, other")
