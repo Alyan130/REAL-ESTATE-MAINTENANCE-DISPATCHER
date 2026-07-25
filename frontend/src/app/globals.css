@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — derived from docs/context/design.md ("Enterprise B2B Software Design").
+ *
+ * Two deliberate deviations from the raw palette, both required by that doc's own
+ * Do's and Don'ts: Verde Eletrico (#00FF00) and Laranja (#FFA500) sit at 100%
+ * saturation, above the documented 80% cap, so they are tempered here. Pure black
+ * is likewise replaced by a charcoal.
+ */
+@theme {
+  /* Surfaces */
+  --color-canvas: #f4f6f8;
+  --color-surface: #ffffff;
+  --color-sunken: #eef1f4;
+  --color-shell: #333333;
+  --color-shell-strong: #1a1d21;
+  --color-shell-hover: #3f4448;
+
+  /* Text */
+  --color-ink: #333333;
+  --color-ink-strong: #1a1d21;
+  --color-muted: #667085;
+  --color-faint: #8b95a3;
+
+  /* Lines */
+  --color-line: #cccccc;
+  --color-line-soft: #e4e8ec;
+
+  /* Brand - Azul Conectividade */
+  --color-brand: #005691;
+  --color-brand-hover: #004876;
+  --color-brand-soft: #e7eff5;
+
+  /* Semantic */
+  --color-success: #2e9e63;
+  --color-success-soft: #e9f4ee;
+  --color-warn: #cc8433;
+  --color-warn-soft: #fbf2e6;
+  --color-danger: #c0392b;
+  --color-danger-soft: #fbeceb;
+  --color-info: #3a8fb9;
+  --color-info-soft: #e9f1f6;
+
+  /* Type */
+  --font-sans: var(--font-open-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "SFMono-Regular", monospace;
+
+  /* Shape & depth */
+  --radius-card: 0.5rem;
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
+  --shadow-lift: 0 6px 20px rgba(0, 0, 0, 0.1);
+  --shadow-overlay: 0 24px 60px rgba(0, 0, 0, 0.22);
+
+  /* Skeleton shimmer. Every other animation goes through Motion. */
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+
+  @keyframes shimmer {
+    0% {
+      opacity: 0.5;
+    }
+    50% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0.5;
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+  }
+
+  /* Focus contract: 2px accent ring, offset 2px. Declared once so every
+     interactive element inherits it instead of restating it. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    color: var(--color-ink-strong);
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.25;
+  }
+}
+
+@layer utilities {
+  /* Technical values: IDs, timestamps, counts. */
+  .text-technical {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: -0.01em;
+  }
+
+  .label-ui {
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
