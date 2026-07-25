@@ -24,7 +24,7 @@ Handles the full loop autonomously: classify ticket → contact vendors → coll
 
 ## Tech Stack
 
-**Frontend:** Next.js 16, Tailwind CSS, Motion, Zustand
+**Frontend:** Next.js 16, Tailwind CSS,Typescript, Zustand for state Managment, Minimal Smooth Tailwaind Animations, Axios for API Handling.
 
 **Backend:** FastAPI, Pydantic, Alembic
 
@@ -45,3 +45,9 @@ See [@docs/context/user-story.md](docs/context/user-story.md)
 - [@docs/rules/coding-conventions.md](docs/rules/coding-conventions.md)
 - [@docs/rules/security.md](docs/rules/security.md)
 - [@docs/rules/error-handling.md](docs/rules/error-handling.md)
+
+## Design System:
+**Use for Consistent UI across all project frontend**
+See [@docs/context/design.md](docs/context/design.md)
+
+
