@@ -105,12 +105,12 @@ export default function TenantsPage() {
 
       {hasProperties ? (
         <div className="flex flex-wrap items-center gap-2">
-          <label htmlFor="tenant-property-filter" className="text-sm text-muted">
+          <label htmlFor="tenant-property-filter" className="text-xs font-semibold text-muted">
             Property
           </label>
           <select
             id="tenant-property-filter"
-            className="h-9 rounded-card border border-line bg-surface px-2.5 text-sm text-ink"
+            className="h-9 rounded-full border border-line-soft bg-surface px-3.5 text-xs font-semibold text-ink focus:border-brand focus:outline-none cursor-pointer"
             value={propertyFilter}
             onChange={(event) => setPropertyFilter(event.target.value)}
           >
@@ -153,11 +153,11 @@ export default function TenantsPage() {
             const pending = tenant.invite_status === "pending";
             return (
               <StaggerItem key={tenant.id}>
-                <Card>
-                  <CardBody className="flex flex-wrap items-start justify-between gap-4">
+                <Card className="hover:border-line transition-colors">
+                  <CardBody className="flex flex-wrap items-center justify-between gap-4">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold text-ink-strong">
+                        <p className="font-bold text-ink-strong text-base">
                           {tenant.name ?? "Unnamed tenant"}
                         </p>
                         <Badge tone={pending ? "warn" : "success"}>
@@ -165,18 +165,18 @@ export default function TenantsPage() {
                         </Badge>
                       </div>
 
-                      <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-muted">
-                        <Mail size={14} />
+                      <p className="mt-1 flex items-center gap-1.5 text-xs text-muted font-medium">
+                        <Mail size={13} className="text-brand shrink-0" />
                         {tenant.email}
                       </p>
 
-                      <p className="mt-1 text-sm text-muted">
+                      <p className="mt-1 text-xs text-muted font-medium">
                         {propertyNames.get(tenant.property_id) ?? "Unknown property"}
                         {tenant.unit_number ? ` · Unit ${tenant.unit_number}` : ""}
                       </p>
 
                       {tenant.lease_start || tenant.lease_end ? (
-                        <p className="mt-1 text-technical text-faint">
+                        <p className="mt-1 text-technical text-faint text-xs">
                           Lease {formatDate(tenant.lease_start)} –{" "}
                           {formatDate(tenant.lease_end)}
                         </p>
@@ -188,7 +188,7 @@ export default function TenantsPage() {
                         <Button
                           size="sm"
                           variant="secondary"
-                          icon={<Send size={15} />}
+                          icon={<Send size={14} />}
                           loading={resendingId === tenant.id}
                           onClick={() => void handleResend(tenant)}
                         >
@@ -228,14 +228,14 @@ export default function TenantsPage() {
         onConfirm={() => void handleDeactivate()}
         body={
           <>
-            <p>
-              <span className="font-semibold">
+            <p className="text-xs text-muted">
+              <span className="font-semibold text-ink-strong">
                 {removing?.name ?? removing?.email}
               </span>{" "}
               loses access immediately — their tenant record and their login are both
               switched off.
             </p>
-            <p className="mt-3">
+            <p className="mt-3 text-xs text-muted">
               There is no reactivate action. Getting them back means inviting them
               again with a different email address.
             </p>

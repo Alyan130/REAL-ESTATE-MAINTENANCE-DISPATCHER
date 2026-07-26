@@ -79,20 +79,20 @@ export default function PropertiesPage() {
         <StaggerList>
           {list.map((property) => (
             <StaggerItem key={property.id}>
-              <Card>
-                <CardBody className="flex flex-wrap items-start justify-between gap-4">
+              <Card className="hover:border-line transition-colors">
+                <CardBody className="flex flex-wrap items-center justify-between gap-4">
                   <div className="min-w-0">
                     <Link
                       href={`/properties/${property.id}`}
-                      className="font-semibold text-ink-strong underline-offset-2 hover:underline"
+                      className="font-bold text-ink-strong text-base hover:text-brand transition-colors"
                     >
                       {property.name}
                     </Link>
-                    <p className="mt-1 inline-flex items-center gap-1.5 text-sm text-muted">
-                      <MapPin size={14} />
+                    <p className="mt-1 flex items-center gap-1.5 text-xs text-muted font-medium">
+                      <MapPin size={13} className="text-brand shrink-0" />
                       {property.address}
                     </p>
-                    <p className="mt-1 text-technical text-faint">
+                    <p className="mt-1 text-technical text-faint text-xs">
                       Added {formatDate(property.created_at)}
                     </p>
                   </div>
@@ -106,7 +106,7 @@ export default function PropertiesPage() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      icon={<Trash2 size={15} />}
+                      icon={<Trash2 size={14} />}
                       aria-label={`Remove ${property.name}`}
                       onClick={() => setRemoving(property)}
                     >
@@ -126,8 +126,6 @@ export default function PropertiesPage() {
         onCreated={() => void properties.reload({ silent: true })}
       />
 
-      {/* Soft delete: the row disappears but the history behind it does not, so
-          the confirmation must not promise permanent deletion. */}
       <ConfirmDialog
         open={Boolean(removing)}
         title="Remove this property?"
@@ -138,12 +136,12 @@ export default function PropertiesPage() {
         onConfirm={() => void handleDelete()}
         body={
           <>
-            <p>
-              <span className="font-semibold">{removing?.name}</span> disappears from
+            <p className="text-xs text-muted">
+              <span className="font-semibold text-ink-strong">{removing?.name}</span> disappears from
               your list. Its tickets and tenant records are kept, so past history
               stays intact — but you won&apos;t be able to invite new tenants to it.
             </p>
-            <p className="mt-3">There is no way to restore it from this screen.</p>
+            <p className="mt-3 text-xs text-muted">There is no way to restore it from this screen.</p>
           </>
         }
       />

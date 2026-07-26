@@ -45,3 +45,7 @@ See [@docs/context/user-story.md](docs/context/user-story.md)
 - [@docs/rules/coding-conventions.md](docs/rules/coding-conventions.md)
 - [@docs/rules/security.md](docs/rules/security.md)
 - [@docs/rules/error-handling.md](docs/rules/error-handling.md)
+
+## Design System:
+**Use for Consistent UI across all project frontend**
+See [@docs/context/design.md](docs/context/design.md)

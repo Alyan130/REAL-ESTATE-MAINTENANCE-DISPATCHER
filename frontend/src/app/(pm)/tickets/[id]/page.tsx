@@ -46,8 +46,6 @@ export default function TicketDetailPage() {
 
   const resource = useAsync(async () => {
     const ticket = await getTicket(ticketId);
-    // Both are supporting detail: a deactivated tenant 404s, and that shouldn't
-    // take the whole screen down.
     const [property, tenant] = await Promise.all([
       getProperty(ticket.property_id).catch(() => null),
       getTenant(ticket.tenant_id).catch(() => null),
@@ -64,9 +62,6 @@ export default function TicketDetailPage() {
 
   const ticket = resource.data?.ticket;
 
-  // Approval hands off to a background task and answers immediately with
-  // DISPATCHING. The settled result (DISPATCHED or NEEDS_ATTENTION) only shows up
-  // if we go and look for it.
   usePolling(
     ticket?.status === "DISPATCHING",
     () => void resource.reload({ silent: true }),
@@ -82,8 +77,6 @@ export default function TicketDetailPage() {
       toast.error(errorMessage(error));
     } finally {
       setApproving(false);
-      // Reload either way: on a 409 the ticket already moved on, and the screen
-      // should show where it actually is.
       await resource.reload({ silent: true });
     }
   };
@@ -149,7 +142,9 @@ export default function TicketDetailPage() {
       <FadeIn>
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="text-[2.25rem] leading-tight font-bold">{ticket.title}</h1>
+            <h1 className="text-[2rem] sm:text-[2.25rem] leading-tight font-bold text-ink-strong">
+              {ticket.title}
+            </h1>
             <p className="mt-1 text-technical text-muted">
               {property?.name ?? "Unknown property"}
               {tenant?.unit_number ? ` · Unit ${tenant.unit_number}` : ""}
@@ -177,7 +172,7 @@ export default function TicketDetailPage() {
           {ticket.status === "DISPATCHING" ? (
             <button
               type="button"
-              className="ml-1 font-semibold underline"
+              className="ml-1 font-semibold underline cursor-pointer"
               onClick={() => void resource.reload({ silent: true })}
             >
               Check now
@@ -193,33 +188,33 @@ export default function TicketDetailPage() {
             <CardHeader title="What the tenant reported" />
             <CardBody className="flex flex-col gap-4">
               {ticket.description ? (
-                <p className="whitespace-pre-wrap text-ink">{ticket.description}</p>
+                <p className="whitespace-pre-wrap text-sm text-ink leading-relaxed">
+                  {ticket.description}
+                </p>
               ) : (
-                <p className="text-muted italic">
+                <p className="text-xs text-muted italic">
                   No description was provided with this report.
                 </p>
               )}
 
               <div
-                className={`flex items-start gap-3 rounded-card border px-4 py-3 ${
-                  ticket.permission_to_enter
-                    ? "border-success/30 bg-success-soft"
-                    : "border-warn/30 bg-warn-soft"
-                }`}
+                className={`flex items-start gap-3 rounded-xl border p-4 ${ticket.permission_to_enter
+                    ? "border-success/20 bg-success-soft"
+                    : "border-warn/25 bg-warn-soft"
+                  }`}
               >
                 <DoorOpen
                   size={18}
-                  className={`mt-0.5 shrink-0 ${
-                    ticket.permission_to_enter ? "text-success" : "text-warn"
-                  }`}
+                  className={`mt-0.5 shrink-0 ${ticket.permission_to_enter ? "text-success" : "text-warn"
+                    }`}
                 />
-                <div className="text-sm">
-                  <p className="font-semibold text-ink">
+                <div className="text-xs">
+                  <p className="font-semibold text-ink-strong">
                     {ticket.permission_to_enter
                       ? "Vendor may enter when the tenant is out"
                       : "No permission to enter"}
                   </p>
-                  <p className="text-muted">
+                  <p className="mt-0.5 text-muted leading-relaxed">
                     {ticket.permission_to_enter
                       ? "Scheduling doesn't depend on the tenant being home."
                       : "A vendor cannot enter unless the tenant is present — the visit has to be scheduled around them."}
@@ -243,9 +238,9 @@ export default function TicketDetailPage() {
               {ticket.media_urls?.length ? (
                 <PhotoGrid urls={ticket.media_urls} context={ticket.title} />
               ) : ticket.status === "PENDING_UPLOAD" ? (
-                <p className="text-sm text-muted">Photos are still uploading.</p>
+                <p className="text-xs text-muted">Photos are still uploading.</p>
               ) : (
-                <p className="text-sm text-muted">No photos were attached.</p>
+                <p className="text-xs text-muted">No photos were attached.</p>
               )}
             </CardBody>
           </Card>
@@ -257,15 +252,17 @@ export default function TicketDetailPage() {
             <CardHeader title="AI triage" icon={<Sparkles size={18} />} />
             <CardBody className="flex flex-col gap-3">
               {ticket.ai_summary ? (
-                <p className="text-ink">{ticket.ai_summary}</p>
+                <p className="text-xs font-medium text-ink leading-relaxed">
+                  {ticket.ai_summary}
+                </p>
               ) : (
-                <p className="text-sm text-muted italic">
+                <p className="text-xs text-muted italic">
                   {ticket.status === "PENDING_UPLOAD"
                     ? "Classification runs once the photos finish uploading."
                     : "This ticket hasn't been classified."}
                 </p>
               )}
-              <dl className="grid grid-cols-2 gap-3 text-sm">
+              <dl className="grid grid-cols-2 gap-3 text-xs pt-1 border-t border-line-soft/80">
                 <div>
                   <dt className="text-muted">Priority</dt>
                   <dd className="mt-1">
@@ -295,11 +292,11 @@ export default function TicketDetailPage() {
             <CardBody className="flex flex-col gap-3">
               {awaitingDecision ? (
                 <>
-                  <p className="text-sm text-muted">
+                  <p className="text-xs text-muted leading-relaxed">
                     Approving hands off to vendor selection immediately. Rejecting
                     cancels the ticket for good.
                   </p>
-                  <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2 pt-1">
                     <Button
                       icon={<Check size={16} />}
                       loading={approving}
@@ -321,16 +318,16 @@ export default function TicketDetailPage() {
               ) : isEmergency ? (
                 <div className="flex items-start gap-3">
                   <Zap size={18} className="mt-0.5 shrink-0 text-danger" />
-                  <p className="text-sm text-muted">
+                  <p className="text-xs text-muted leading-relaxed">
                     P1 emergencies dispatch automatically during intake — they never
                     wait on approval. There is nothing for you to approve here.
                   </p>
                 </div>
               ) : (
-                <p className="text-sm text-muted">
+                <p className="text-xs text-muted leading-relaxed">
                   This ticket isn&apos;t waiting on you. Approve and reject are only
                   available while a ticket sits at{" "}
-                  <span className="text-technical">PENDING_APPROVAL</span>.
+                  <span className="text-technical text-ink">PENDING_APPROVAL</span>.
                 </p>
               )}
             </CardBody>
@@ -339,11 +336,11 @@ export default function TicketDetailPage() {
           <Card>
             <CardHeader title="Details" />
             <CardBody>
-              <dl className="flex flex-col gap-3 text-sm">
+              <dl className="flex flex-col gap-3 text-xs">
                 <Detail label="Reported by">
                   {tenant ? (
                     <>
-                      {tenant.name ?? tenant.email}
+                      <span className="font-semibold text-ink">{tenant.name ?? tenant.email}</span>
                       <span className="block text-technical text-muted">
                         {tenant.email}
                       </span>
@@ -356,7 +353,7 @@ export default function TicketDetailPage() {
                   {property ? (
                     <Link
                       href={`/properties/${property.id}`}
-                      className="font-medium text-brand underline"
+                      className="font-semibold text-brand hover:underline"
                     >
                       {property.name}
                     </Link>
@@ -387,13 +384,11 @@ export default function TicketDetailPage() {
             </CardBody>
           </Card>
 
-          {/* Escape hatch, not a primary control — mainly for unsticking a
-              NEEDS_ATTENTION ticket by hand. */}
           <div>
             <button
               type="button"
               onClick={() => setShowAdvanced((open) => !open)}
-              className="text-sm font-medium text-muted underline"
+              className="text-xs font-semibold text-muted underline hover:text-ink cursor-pointer"
             >
               {showAdvanced ? "Hide advanced" : "Advanced: set status manually"}
             </button>
@@ -401,13 +396,13 @@ export default function TicketDetailPage() {
             {showAdvanced ? (
               <Card className="mt-3">
                 <CardBody className="flex flex-col gap-3">
-                  <p className="text-sm text-muted">
+                  <p className="text-xs text-muted leading-relaxed">
                     Writes the status directly, skipping the AI workflow. Use this to
                     unstick a ticket, not to move one through the normal flow.
                   </p>
                   <select
                     aria-label="New status"
-                    className="h-10 rounded-card border border-line bg-surface px-2.5 text-sm"
+                    className="h-9 rounded-full border border-line-soft bg-surface px-3.5 text-xs font-semibold text-ink cursor-pointer"
                     value={overrideStatus}
                     onChange={(event) =>
                       setOverrideStatus(event.target.value as TicketStatus | "")
@@ -448,11 +443,11 @@ export default function TicketDetailPage() {
         onConfirm={() => void handleReject()}
         body={
           <>
-            <p>
+            <p className="text-xs text-muted">
               The ticket is cancelled immediately and no vendor is contacted. This
               can&apos;t be undone — the tenant would have to report the issue again.
             </p>
-            <p className="mt-3 font-semibold text-ink">{ticket.title}</p>
+            <p className="mt-3 font-bold text-ink-strong text-sm">{ticket.title}</p>
           </>
         }
       />
@@ -464,9 +459,9 @@ function BackLink() {
   return (
     <Link
       href="/dashboard"
-      className="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"
+      className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink transition-colors"
     >
-      <ArrowLeft size={15} />
+      <ArrowLeft size={14} />
       All tickets
     </Link>
   );
@@ -475,8 +470,8 @@ function BackLink() {
 function Detail({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-muted">{label}</dt>
-      <dd className="mt-0.5 text-ink">{children}</dd>
+      <dt className="text-muted text-xs font-medium">{label}</dt>
+      <dd className="mt-0.5 text-ink text-xs">{children}</dd>
     </div>
   );
 }

@@ -7,15 +7,15 @@ import { cn } from "@/lib/cn";
 import { useToastStore, type ToastTone } from "@/stores/toast-store";
 
 const TONE_CLASSES: Record<ToastTone, string> = {
-  success: "border-success/40 bg-success-soft",
-  error: "border-danger/40 bg-danger-soft",
-  info: "border-info/40 bg-info-soft",
+  success: "border-success/30 bg-surface shadow-lift text-ink",
+  error: "border-danger/30 bg-surface shadow-lift text-ink",
+  info: "border-brand/30 bg-surface shadow-lift text-ink",
 };
 
 const TONE_ICON_CLASSES: Record<ToastTone, string> = {
   success: "text-success",
   error: "text-danger",
-  info: "text-info",
+  info: "text-brand",
 };
 
 function ToneIcon({ tone }: { tone: ToastTone }) {
@@ -32,7 +32,7 @@ export function ToastHost() {
   return (
     <div
       aria-live="polite"
-      className="pointer-events-none fixed inset-x-0 bottom-0 z-[500] flex flex-col items-center gap-2 p-4 sm:items-end"
+      className="pointer-events-none fixed inset-x-0 bottom-0 z-[500] flex flex-col items-center gap-2.5 p-4 sm:items-end sm:p-6"
     >
       <AnimatePresence initial={false}>
         {toasts.map((toastItem) => (
@@ -44,21 +44,21 @@ export function ToastHost() {
             exit={{ opacity: 0, y: 8 }}
             transition={{ duration: 0.24, ease: "easeOut" }}
             className={cn(
-              "pointer-events-auto flex w-full max-w-sm items-start gap-3 rounded-card border px-4 py-3 shadow-lift",
+              "pointer-events-auto flex w-full max-w-sm items-center gap-3 rounded-full border px-4 py-3 shadow-lift backdrop-blur-md",
               TONE_CLASSES[toastItem.tone],
             )}
           >
-            <span className={cn("mt-0.5 shrink-0", TONE_ICON_CLASSES[toastItem.tone])}>
+            <span className={cn("shrink-0", TONE_ICON_CLASSES[toastItem.tone])}>
               <ToneIcon tone={toastItem.tone} />
             </span>
-            <p className="min-w-0 flex-1 text-sm text-ink">{toastItem.message}</p>
+            <p className="min-w-0 flex-1 text-xs font-semibold text-ink-strong">{toastItem.message}</p>
             <button
               type="button"
               aria-label="Dismiss"
               onClick={() => dismiss(toastItem.id)}
-              className="shrink-0 rounded p-0.5 text-muted hover:text-ink"
+              className="shrink-0 rounded-full p-1 text-muted hover:bg-sunken hover:text-ink"
             >
-              <X size={16} />
+              <X size={14} />
             </button>
           </motion.div>
         ))}

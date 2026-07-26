@@ -1,69 +1,70 @@
 @import "tailwindcss";
 
 /*
- * Design tokens — derived from docs/context/design.md ("Enterprise B2B Software Design").
+ * Design tokens — derived from docs/context/design.md ("Notion Warm Workspace").
  *
- * Two deliberate deviations from the raw palette, both required by that doc's own
- * Do's and Don'ts: Verde Eletrico (#00FF00) and Laranja (#FFA500) sit at 100%
- * saturation, above the documented 80% cap, so they are tempered here. Pure black
- * is likewise replaced by a charcoal.
+ * Warm minimalism, whisper borders, warm neutral palette (#fff8f5, #f6f5f4, #f5ece8),
+ * off-black high-contrast text (#0f0c0a / #1e1b19), and Notion Blue (#0075de) as accent.
  */
 @theme {
   /* Surfaces */
-  --color-canvas: #f4f6f8;
+  --color-canvas: #fff8f5;
   --color-surface: #ffffff;
-  --color-sunken: #eef1f4;
-  --color-shell: #333333;
-  --color-shell-strong: #1a1d21;
-  --color-shell-hover: #3f4448;
+  --color-sunken: #fbf2ee;
+  --color-surface-container: #f5ece8;
+  --color-surface-high: #efe6e2;
+  --color-shell: #f6f5f4;
+  --color-shell-strong: #0f0c0a;
+  --color-shell-hover: #e9e1dd;
 
   /* Text */
-  --color-ink: #333333;
-  --color-ink-strong: #1a1d21;
-  --color-muted: #667085;
-  --color-faint: #8b95a3;
+  --color-ink: #1e1b19;
+  --color-ink-strong: #0f0c0a;
+  --color-muted: #454749;
+  --color-faint: #717784;
 
-  /* Lines */
-  --color-line: #cccccc;
-  --color-line-soft: #e4e8ec;
+  /* Lines & Whisper Borders */
+  --color-line: #c1c6d5;
+  --color-line-soft: #e9e1dd;
 
-  /* Brand - Azul Conectividade */
-  --color-brand: #005691;
-  --color-brand-hover: #004876;
+  /* Brand - Azul Notion */
+  --color-brand: #0075de;
+  --color-brand-hover: #005eb4;
   --color-brand-soft: #e7eff5;
 
-  /* Semantic */
+  /* Semantic Tones */
   --color-success: #2e9e63;
   --color-success-soft: #e9f4ee;
   --color-warn: #cc8433;
   --color-warn-soft: #fbf2e6;
-  --color-danger: #c0392b;
-  --color-danger-soft: #fbeceb;
-  --color-info: #3a8fb9;
-  --color-info-soft: #e9f1f6;
+  --color-danger: #ba1a1a;
+  --color-danger-soft: #ffdad6;
+  --color-info: #005eb4;
+  --color-info-soft: #d5e3ff;
 
   /* Type */
-  --font-sans: var(--font-open-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-inter), var(--font-open-sans), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-jetbrains-mono), ui-monospace, "SFMono-Regular", monospace;
 
   /* Shape & depth */
-  --radius-card: 0.5rem;
-  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.06);
-  --shadow-lift: 0 6px 20px rgba(0, 0, 0, 0.1);
-  --shadow-overlay: 0 24px 60px rgba(0, 0, 0, 0.22);
+  --radius-card: 1rem;
+  --radius-pill: 9999px;
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.04);
+  --shadow-lift: 0 6px 20px rgba(0, 0, 0, 0.08);
+  --shadow-overlay: 0 24px 60px rgba(0, 0, 0, 0.12);
 
-  /* Skeleton shimmer. Every other animation goes through Motion. */
+  /* Skeleton shimmer animation */
   --animate-shimmer: shimmer 1.6s ease-in-out infinite;
 
   @keyframes shimmer {
     0% {
-      opacity: 0.5;
+      opacity: 0.4;
     }
     50% {
-      opacity: 1;
+      opacity: 0.9;
     }
     100% {
-      opacity: 0.5;
+      opacity: 0.4;
     }
   }
 }
@@ -80,12 +81,11 @@
     line-height: 1.6;
   }
 
-  /* Focus contract: 2px accent ring, offset 2px. Declared once so every
-     interactive element inherits it instead of restating it. */
+  /* Focus ring contract: 2px Notion Blue ring, offset 2px. */
   :focus-visible {
     outline: 2px solid var(--color-brand);
     outline-offset: 2px;
-    border-radius: 2px;
+    border-radius: 4px;
   }
 
   h1,
@@ -93,7 +93,7 @@
   h3 {
     color: var(--color-ink-strong);
     font-weight: 700;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.015em;
     line-height: 1.25;
   }
 }

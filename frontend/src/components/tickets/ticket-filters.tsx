@@ -27,7 +27,7 @@ interface TicketFiltersProps {
 }
 
 const SELECT_CLASSES =
-  "h-9 rounded-card border border-line bg-surface px-2.5 text-sm text-ink";
+  "h-9 rounded-full border border-line-soft bg-surface px-3 py-1 text-xs font-semibold text-ink transition-colors focus:border-brand focus:outline-none cursor-pointer";
 
 export function TicketFilters({
   value,
@@ -40,8 +40,8 @@ export function TicketFilters({
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <span className="inline-flex items-center gap-1.5 text-sm text-muted">
-        <SlidersHorizontal size={15} />
+      <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted mr-1">
+        <SlidersHorizontal size={14} className="text-brand" />
         Filter
       </span>
 

@@ -77,7 +77,7 @@ export default function DashboardPage() {
           <Button
             variant="secondary"
             size="sm"
-            icon={<RefreshCw size={15} />}
+            icon={<RefreshCw size={14} />}
             onClick={() => void tickets.reload()}
             disabled={tickets.loading}
           >
@@ -110,7 +110,6 @@ export default function DashboardPage() {
 
       {loading && ticketList.length === 0 ? <RowsSkeleton rows={4} /> : null}
 
-      {/* A PM with no properties can't have tickets — point at the real first step. */}
       {!loading && !hasProperties ? (
         <FadeIn>
           <EmptyState
@@ -150,17 +149,17 @@ export default function DashboardPage() {
       ) : null}
 
       {needsAction.length > 0 ? (
-        <section className="rounded-card border border-warn/40 bg-warn-soft/50 p-4">
-          <header className="mb-3 flex items-center gap-2">
-            <TriangleAlert size={18} className="text-warn" />
-            <h2 className="text-base font-bold">
+        <section className="rounded-2xl border border-warn/30 bg-warn-soft/40 p-5 shadow-card">
+          <header className="mb-2.5 flex items-center gap-2">
+            <TriangleAlert size={18} className="text-warn shrink-0" />
+            <h2 className="text-base font-bold text-ink-strong">
               Needs your attention
               <span className="ml-2 text-technical font-normal text-muted">
                 {needsAction.length}
               </span>
             </h2>
           </header>
-          <p className="mb-3 text-sm text-muted">
+          <p className="mb-4 text-xs font-medium text-muted leading-relaxed">
             Approval is paused, the AI escalated, or processing failed. Nothing moves
             on these until you act.
           </p>
@@ -178,9 +177,9 @@ export default function DashboardPage() {
       ) : null}
 
       {rest.length > 0 ? (
-        <section>
+        <section className="flex flex-col gap-3">
           {needsAction.length > 0 ? (
-            <h2 className="mb-3 text-base font-bold">Everything else</h2>
+            <h2 className="text-base font-bold text-ink-strong">Everything else</h2>
           ) : null}
           <StaggerList>
             {rest.map((ticket) => (

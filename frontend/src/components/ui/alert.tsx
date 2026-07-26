@@ -6,10 +6,10 @@ import { cn } from "@/lib/cn";
 type AlertTone = "info" | "warn" | "danger" | "success";
 
 const TONE_CLASSES: Record<AlertTone, string> = {
-  info: "border-info/30 bg-info-soft text-info",
-  warn: "border-warn/30 bg-warn-soft text-warn",
-  danger: "border-danger/30 bg-danger-soft text-danger",
-  success: "border-success/30 bg-success-soft text-success",
+  info: "border-info/20 bg-info-soft text-info",
+  warn: "border-warn/25 bg-warn-soft text-warn",
+  danger: "border-danger/25 bg-danger-soft text-danger",
+  success: "border-success/20 bg-success-soft text-success",
 };
 
 const TONE_ICONS: Record<AlertTone, ReactNode> = {
@@ -26,19 +26,24 @@ interface AlertProps {
   className?: string;
 }
 
-export function Alert({ tone = "info", title, children, className }: AlertProps) {
+export function Alert({
+  tone = "info",
+  title,
+  children,
+  className,
+}: AlertProps) {
   return (
     <div
       role={tone === "danger" ? "alert" : "status"}
       className={cn(
-        "flex items-start gap-3 rounded-card border px-4 py-3 text-sm",
+        "flex items-start gap-3 rounded-xl border px-4 py-3.5 text-sm",
         TONE_CLASSES[tone],
         className,
       )}
     >
       <span className="mt-0.5 shrink-0">{TONE_ICONS[tone]}</span>
       <div className="min-w-0">
-        {title ? <p className="font-semibold">{title}</p> : null}
+        {title ? <p className="font-semibold text-ink-strong">{title}</p> : null}
         <div className={cn(title && "mt-0.5", "text-ink")}>{children}</div>
       </div>
     </div>

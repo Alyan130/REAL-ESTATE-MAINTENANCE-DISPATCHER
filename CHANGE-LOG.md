@@ -1,3 +1,17 @@
+## [0.15.0] - 2026-07-27
+
+### Changed
+- **Redesigned Frontend UI to Notion Warm Workspace system**:
+  - Updated `globals.css` with warm neutral surface colors, Notion Blue accent (`#0075de`), whisper borders, and Inter/JetBrains Mono typography.
+  - Refactored core UI components (`Button`, `Card`, `Badge`, `Input`/`Textarea`/`Select`/`Checkbox`, `Modal`, `Alert`, `EmptyState`, `Skeleton`, `ToastHost`, `ConfirmDialog`) with pill shapes, rounded-2xl containers, tactile motion animations, and warm styling.
+  - Redesigned `AppShell` with warm navigation sidebar, responsive drawer, pill active state indicators, scrollable navigation area (`overflow-y-auto`), smooth expand/collapse toggle (`w-64` <-> `w-20`), icon-only mode when collapsed, and persistent collapse state in `localStorage`.
+  - Redesigned `AuthLayout` split-screen layout with warm off-white canvas and warm workspace sidebar.
+  - Updated domain components (`TicketRow`, `StatusBadge`, `TicketFilters`, `PhotoGrid`) with pill filter dropdowns, rounded image frames, and warm card hover states.
+  - Redesigned form modals (`AddPropertyModal`, `InviteTenantModal`, `InviteVendorModal`) with pill category buttons and warm input controls.
+  - Updated all page views across PM (`Dashboard`, `Ticket Detail`, `Properties`, `Property Detail`, `Tenants`, `Vendors`), Tenant (`MyTickets`, `Submit Ticket`, `Ticket Detail`), Auth (`Login`, `AcceptInvite`), and `Vendor` with the Notion Warm Workspace visual language.
+  - Preserved all business logic, state management, and API integrations intact.
+  - Verified `next build` passes with zero errors.
+
 ## [0.14.0] - 2026-07-26
 
 ### Added

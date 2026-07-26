@@ -1,0 +1,17 @@
+- [ ] Update design tokens and global CSS in frontend/src/app/globals.css
+- [ ] Redesign Button component in frontend/src/components/ui/button.tsx
+- [ ] Redesign Card component in frontend/src/components/ui/card.tsx
+- [ ] Redesign Badge component in frontend/src/components/ui/badge.tsx
+- [ ] Redesign Field and Input components in frontend/src/components/ui/field.tsx
+- [ ] Redesign Modal component in frontend/src/components/ui/modal.tsx
+- [ ] Redesign Alert, EmptyState, Skeleton, ConfirmDialog, PageHeader, and ToastHost in frontend/src/components/ui/
+- [ ] Redesign AppShell navigation and layout in frontend/src/components/layout/app-shell.tsx
+- [ ] Redesign AuthLayout component in frontend/src/components/layout/auth-layout.tsx
+- [ ] Redesign TicketRow, StatusBadge, TicketFilters, and PhotoGrid in frontend/src/components/tickets/
+- [ ] Redesign Property, Tenant, and Vendor modal forms
+- [ ] Redesign Landing Page in frontend/src/app/page.tsx
+- [ ] Redesign Auth Pages in frontend/src/app/login/page.tsx and accept-invite/page.tsx
+- [ ] Redesign PM Dashboard and Ticket Detail pages in frontend/src/app/(pm)/
+- [ ] Redesign PM Properties, Tenants, and Vendors pages in frontend/src/app/(pm)/
+- [ ] Redesign Tenant Ticket pages in frontend/src/app/(tenant)/
+- [ ] Redesign Vendor page in frontend/src/app/vendor/page.tsx

@@ -36,7 +36,6 @@ export default function SubmitTicketPage() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
-  // Object URLs are only freed on unmount; removing one photo frees its own URL.
   useEffect(() => {
     return () => {
       photos.forEach((photo) => URL.revokeObjectURL(photo.previewUrl));
@@ -87,12 +86,9 @@ export default function SubmitTicketPage() {
         photos: photos.map((photo) => photo.file),
       });
 
-      // The API answers as soon as the ticket exists; photos and classification
-      // finish in the background, so there is nothing to wait on here.
       toast.success("Report received. We're on it.");
       router.replace(`/my-tickets/${id}`);
     } catch (submitError) {
-      // Everything the user typed stays on screen so they can just retry.
       setError(errorMessage(submitError));
       setSubmitting(false);
     }
@@ -102,15 +98,17 @@ export default function SubmitTicketPage() {
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6">
       <Link
         href="/my-tickets"
-        className="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"
+        className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink transition-colors"
       >
-        <ArrowLeft size={15} />
+        <ArrowLeft size={14} />
         My reports
       </Link>
 
       <FadeIn>
-        <h1 className="text-[2.25rem] leading-tight font-bold">Report an issue</h1>
-        <p className="mt-1 text-muted">
+        <h1 className="text-[2rem] sm:text-[2.25rem] leading-tight font-bold text-ink-strong">
+          Report an issue
+        </h1>
+        <p className="mt-1 text-xs text-muted leading-relaxed font-medium">
           A title and a photo is usually enough. Someone will be assigned without you
           having to chase anyone.
         </p>
@@ -139,7 +137,7 @@ export default function SubmitTicketPage() {
             />
 
             <div className="flex flex-col gap-2">
-              <span className="label-ui text-ink">
+              <span className="label-ui font-medium text-ink-strong">
                 Photos
                 <span className="ml-1.5 text-xs font-normal text-faint">
                   Up to {MAX_PHOTOS}
@@ -172,7 +170,7 @@ export default function SubmitTicketPage() {
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ duration: 0.24, ease: "easeOut" }}
-                      className="relative overflow-hidden rounded-card border border-line-soft"
+                      className="relative overflow-hidden rounded-2xl border border-line-soft bg-sunken"
                     >
                       <img
                         src={photo.previewUrl}
@@ -183,9 +181,9 @@ export default function SubmitTicketPage() {
                         type="button"
                         aria-label={`Remove ${photo.file.name}`}
                         onClick={() => removePhoto(photo.previewUrl)}
-                        className="absolute top-1 right-1 rounded-full bg-shell-strong/70 p-1 text-white"
+                        className="absolute top-1.5 right-1.5 rounded-full bg-shell-strong/80 p-1 text-white hover:bg-shell-strong cursor-pointer"
                       >
-                        <X size={14} />
+                        <X size={13} />
                       </button>
                     </motion.div>
                   ))}
@@ -193,8 +191,6 @@ export default function SubmitTicketPage() {
               ) : null}
             </div>
 
-            {/* Affects scheduling directly, so it is asked here rather than chased
-                later. */}
             <Checkbox
               label="A contractor may enter while I'm out"
               description="Without this, the visit has to be arranged for a time you're home."
@@ -202,7 +198,7 @@ export default function SubmitTicketPage() {
               onChange={(event) => setPermissionToEnter(event.target.checked)}
             />
 
-            <Button type="submit" loading={submitting} fullWidth>
+            <Button type="submit" loading={submitting} fullWidth className="mt-2">
               Submit report
             </Button>
           </form>

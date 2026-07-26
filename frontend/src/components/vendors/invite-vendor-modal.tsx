@@ -121,11 +121,8 @@ export function InviteVendorModal({
           onChange={(event) => setPhone(event.target.value)}
         />
 
-        {/* Fixed vocabulary, not free text — the backend rejects anything off-list,
-            and a mistyped category means this vendor is never matched. "other" is
-            a ticket-only catch-all and is deliberately absent. */}
         <fieldset className="flex flex-col gap-2">
-          <legend className="label-ui text-ink">
+          <legend className="label-ui font-medium text-ink-strong">
             Categories they cover
             <span className="ml-1.5 text-xs font-normal text-faint">
               Optional, but a vendor with none is never matched to a job
@@ -141,10 +138,10 @@ export function InviteVendorModal({
                   aria-pressed={selected}
                   onClick={() => toggleCategory(category)}
                   className={cn(
-                    "rounded-full border px-3 py-1.5 text-sm font-medium",
+                    "rounded-full border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer",
                     selected
-                      ? "border-brand bg-brand text-white"
-                      : "border-line bg-surface text-muted hover:bg-brand-soft hover:text-brand",
+                      ? "border-brand bg-brand text-white shadow-xs"
+                      : "border-line-soft bg-surface text-muted hover:bg-sunken hover:border-line hover:text-ink-strong",
                   )}
                 >
                   {categoryLabel(category)}
@@ -163,12 +160,12 @@ export function InviteVendorModal({
           hint="A vendor already at this limit is skipped during dispatch."
         />
 
-        <p className="text-sm text-muted">
+        <p className="text-xs text-muted">
           Rating starts at 5.0 and can&apos;t be set here. It decides which eligible
           vendor is picked first.
         </p>
 
-        <div className="mt-2 flex justify-end gap-2">
+        <div className="mt-2 flex justify-end gap-2.5">
           <Button variant="secondary" onClick={handleClose} disabled={saving}>
             Cancel
           </Button>

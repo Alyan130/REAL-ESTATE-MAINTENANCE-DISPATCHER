@@ -7,9 +7,7 @@ existence.
 from __future__ import annotations
 
 import uuid
-
 from sqlalchemy.orm import Session
-
 from app.exceptions import DuplicateEmailError, InviteAlreadyAcceptedError, NotFoundError
 from app.models.tenant import Tenant
 from app.models.user import User
@@ -19,7 +17,6 @@ from app.repositories.user_repo import UserRepository
 from app.schemas.tenants import CreateTenantRequest, TenantInviteResponse, TenantResponse
 from app.services.base import BaseService
 from app.services.invites import issue_invite
-
 
 class TenantService(BaseService):
     def __init__(self, db: Session) -> None:
@@ -31,6 +28,7 @@ class TenantService(BaseService):
     def list_for_pm(
         self, pm_id: uuid.UUID, property_id: uuid.UUID | None = None
     ) -> list[TenantResponse]:
+        
         return [
             self._to_response(tenant)
             for tenant in self.tenants.list_for_pm(pm_id, property_id)

@@ -42,7 +42,7 @@ export function DemoBadge() {
 
   return (
     <div className="pointer-events-none fixed bottom-4 left-4 z-[400]">
-      <span className="inline-flex items-center gap-1.5 rounded-full border border-warn/40 bg-warn-soft px-3 py-1 text-xs font-semibold text-warn shadow-card">
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-warn/30 bg-warn-soft/90 px-3.5 py-1.5 text-xs font-semibold text-warn shadow-card backdrop-blur-md">
         <FlaskConical size={13} />
         Demo data — no backend
       </span>
@@ -59,12 +59,12 @@ export function DemoCredentials({
   if (!IS_DEMO_MODE) return null;
 
   return (
-    <div className="rounded-card border border-warn/30 bg-warn-soft/60 p-4">
-      <p className="label-ui text-ink">
+    <div className="rounded-2xl border border-warn/25 bg-warn-soft/50 p-4">
+      <p className="label-ui font-medium text-ink-strong">
         Demo mode — pick an account
         <span className="ml-1.5 text-xs font-normal text-muted">
           password{" "}
-          <span className="text-technical text-ink">{DEMO_PASSWORD}</span>
+          <span className="text-technical text-ink-strong">{DEMO_PASSWORD}</span>
         </span>
       </p>
 
@@ -74,23 +74,23 @@ export function DemoCredentials({
             key={account.email}
             type="button"
             onClick={() => onPick(account.email, DEMO_PASSWORD)}
-            className="rounded-card border border-line-soft bg-surface px-3 py-2 text-left hover:border-brand"
+            className="rounded-xl border border-line-soft bg-surface px-3.5 py-2.5 text-left transition-colors hover:border-brand cursor-pointer"
           >
-            <span className="block text-sm font-semibold text-ink-strong">
+            <span className="block text-xs font-bold text-ink-strong">
               {account.label}
               <span className="ml-2 text-technical font-normal text-muted">
                 {account.email}
               </span>
             </span>
-            <span className="block text-xs text-muted">{account.detail}</span>
+            <span className="block text-xs text-muted mt-0.5">{account.detail}</span>
           </button>
         ))}
       </div>
 
       <p className="mt-3 text-xs text-muted">
-        Try <span className="text-technical">sofia@demo.test</span> for the
+        Try <span className="text-technical text-ink">sofia@demo.test</span> for the
         pending-invite error, or{" "}
-        <span className="text-technical">disabled@demo.test</span> for a disabled
+        <span className="text-technical text-ink">disabled@demo.test</span> for a disabled
         account.
       </p>
     </div>
@@ -109,9 +109,9 @@ export function DemoInviteLinks() {
   ] as const;
 
   return (
-    <div className="mt-6 rounded-card border border-warn/30 bg-warn-soft/60 p-4">
-      <p className="label-ui text-ink">Demo mode — invite links</p>
-      <div className="mt-2 flex flex-wrap gap-2">
+    <div className="mt-6 rounded-2xl border border-warn/25 bg-warn-soft/50 p-4">
+      <p className="label-ui font-medium text-ink-strong">Demo mode — invite links</p>
+      <div className="mt-2.5 flex flex-wrap gap-2">
         {tokens.map(([label, token]) => (
           <a key={token} href={`/accept-invite?token=${token}`}>
             <Button size="sm" variant="secondary">

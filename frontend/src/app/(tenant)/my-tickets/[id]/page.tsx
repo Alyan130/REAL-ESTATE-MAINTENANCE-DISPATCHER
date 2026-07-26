@@ -16,12 +16,6 @@ import { formatDateTime } from "@/lib/format";
 import { isTransient, tenantStatusLabel } from "@/lib/status";
 import { useAsync, usePolling } from "@/lib/use-async";
 
-/**
- * The tenant's record of one issue.
- *
- * The endpoint returns `ai_summary`, `priority`, and internal status codes. None
- * of them are rendered here — that detail belongs to the property manager.
- */
 export default function TenantTicketDetailPage() {
   const params = useParams<{ id: string }>();
   const ticketId = params.id;
@@ -61,7 +55,9 @@ export default function TenantTicketDetailPage() {
 
       <FadeIn>
         <div className="flex flex-wrap items-start justify-between gap-3">
-          <h1 className="text-[2.25rem] leading-tight font-bold">{ticket.title}</h1>
+          <h1 className="text-[2rem] sm:text-[2.25rem] leading-tight font-bold text-ink-strong">
+            {ticket.title}
+          </h1>
           <TenantStatusBadge status={ticket.status} />
         </div>
       </FadeIn>
@@ -69,22 +65,24 @@ export default function TenantTicketDetailPage() {
       <Card>
         <CardHeader title="Where this is up to" />
         <CardBody className="flex flex-col gap-3">
-          <p className="text-ink">{tenantStatusLabel(ticket.status)}</p>
+          <p className="text-sm font-medium text-ink leading-relaxed">
+            {tenantStatusLabel(ticket.status)}
+          </p>
           {ticket.status === "PENDING_UPLOAD" ? (
-            <p className="text-sm text-muted">
+            <p className="text-xs text-muted">
               Your photos are still uploading. This page updates on its own.
             </p>
           ) : null}
-          <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
+          <dl className="grid grid-cols-1 gap-3 text-xs sm:grid-cols-2 pt-1 border-t border-line-soft/80">
             <div>
-              <dt className="text-muted">Submitted</dt>
-              <dd className="text-technical text-ink">
+              <dt className="text-muted font-medium">Submitted</dt>
+              <dd className="text-technical text-ink mt-0.5">
                 {formatDateTime(ticket.created_at)}
               </dd>
             </div>
             <div>
-              <dt className="text-muted">Last updated</dt>
-              <dd className="text-technical text-ink">
+              <dt className="text-muted font-medium">Last updated</dt>
+              <dd className="text-technical text-ink mt-0.5">
                 {formatDateTime(ticket.updated_at)}
               </dd>
             </div>
@@ -96,14 +94,16 @@ export default function TenantTicketDetailPage() {
         <CardHeader title="What you reported" />
         <CardBody className="flex flex-col gap-4">
           {ticket.description ? (
-            <p className="whitespace-pre-wrap text-ink">{ticket.description}</p>
+            <p className="whitespace-pre-wrap text-sm text-ink leading-relaxed">
+              {ticket.description}
+            </p>
           ) : (
-            <p className="text-muted italic">You didn&apos;t add any extra detail.</p>
+            <p className="text-xs text-muted italic">You didn&apos;t add any extra detail.</p>
           )}
 
-          <div className="flex items-start gap-3 rounded-card border border-line-soft bg-sunken px-4 py-3 text-sm">
+          <div className="flex items-start gap-3 rounded-xl border border-line-soft bg-sunken p-4 text-xs">
             <DoorOpen size={18} className="mt-0.5 shrink-0 text-muted" />
-            <p className="text-ink">
+            <p className="text-ink font-medium leading-relaxed">
               {ticket.permission_to_enter
                 ? "You said a contractor may enter while you're out."
                 : "You said a contractor may not enter unless you're home."}
@@ -123,9 +123,9 @@ function BackLink() {
   return (
     <Link
       href="/my-tickets"
-      className="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"
+      className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink transition-colors"
     >
-      <ArrowLeft size={15} />
+      <ArrowLeft size={14} />
       My reports
     </Link>
   );

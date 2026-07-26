@@ -62,11 +62,11 @@ export default function PropertyDetailPage() {
       <FadeIn>
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 className="text-[2.25rem] leading-tight font-bold">
+            <h1 className="text-[2rem] sm:text-[2.25rem] leading-tight font-bold text-ink-strong">
               {property.data.name}
             </h1>
-            <p className="mt-1 inline-flex items-center gap-1.5 text-muted">
-              <MapPin size={15} />
+            <p className="mt-1 flex items-center gap-1.5 text-xs text-muted font-medium">
+              <MapPin size={14} className="text-brand shrink-0" />
               {property.data.address}
             </p>
           </div>
@@ -87,7 +87,7 @@ export default function PropertyDetailPage() {
             {tenants.error ? <Alert tone="danger">{tenants.error}</Alert> : null}
 
             {!tenants.loading && tenantList.length === 0 ? (
-              <p className="text-sm text-muted">
+              <p className="text-xs text-muted">
                 Nobody has been invited to this property yet. A tenant has to exist
                 before a ticket can arrive from here.
               </p>
@@ -97,16 +97,16 @@ export default function PropertyDetailPage() {
               {tenantList.map((tenant) => (
                 <li
                   key={tenant.id}
-                  className="flex flex-wrap items-start justify-between gap-2 border-b border-line-soft pb-3 last:border-0 last:pb-0"
+                  className="flex flex-wrap items-start justify-between gap-2 border-b border-line-soft/80 pb-3 last:border-0 last:pb-0"
                 >
                   <div className="min-w-0">
-                    <p className="font-medium text-ink">
+                    <p className="font-semibold text-xs text-ink-strong">
                       {tenant.name ?? "Unnamed tenant"}
                       {tenant.unit_number ? (
-                        <span className="text-muted"> · Unit {tenant.unit_number}</span>
+                        <span className="text-muted font-normal"> · Unit {tenant.unit_number}</span>
                       ) : null}
                     </p>
-                    <p className="text-sm text-muted">{tenant.email}</p>
+                    <p className="text-xs text-muted mt-0.5">{tenant.email}</p>
                   </div>
                   <Badge
                     tone={tenant.invite_status === "pending" ? "warn" : "success"}
@@ -121,9 +121,9 @@ export default function PropertyDetailPage() {
 
         <section className="flex flex-col gap-3">
           <div className="flex items-center gap-2">
-            <Inbox size={18} className="text-brand" />
-            <h2 className="text-lg font-bold">Tickets here</h2>
-            <span className="text-technical text-muted">{ticketList.length}</span>
+            <Inbox size={18} className="text-brand shrink-0" />
+            <h2 className="text-base font-bold text-ink-strong">Tickets here</h2>
+            <span className="text-technical text-muted text-xs">{ticketList.length}</span>
           </div>
 
           {tickets.error ? <Alert tone="danger">{tickets.error}</Alert> : null}
@@ -131,7 +131,7 @@ export default function PropertyDetailPage() {
           {!tickets.loading && ticketList.length === 0 ? (
             <Card>
               <CardBody>
-                <p className="text-sm text-muted">
+                <p className="text-xs text-muted">
                   Nothing has been reported at this property.
                 </p>
               </CardBody>
@@ -163,9 +163,9 @@ function BackLink() {
   return (
     <Link
       href="/properties"
-      className="inline-flex items-center gap-1.5 text-sm font-medium text-muted hover:text-ink"
+      className="inline-flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-ink transition-colors"
     >
-      <ArrowLeft size={15} />
+      <ArrowLeft size={14} />
       All properties
     </Link>
   );

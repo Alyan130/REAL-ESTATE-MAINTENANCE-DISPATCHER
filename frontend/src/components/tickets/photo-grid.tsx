@@ -27,13 +27,13 @@ export function PhotoGrid({ urls, context }: PhotoGridProps) {
             onClick={() => setOpenUrl(url)}
             whileHover={{ y: -2 }}
             transition={{ duration: 0.2, ease: "easeOut" }}
-            className="overflow-hidden rounded-card border border-line-soft bg-sunken"
+            className="overflow-hidden rounded-2xl border border-line-soft bg-sunken focus:outline-none focus:ring-2 focus:ring-brand/20 cursor-pointer"
           >
             <img
               src={url}
               alt={`${context} — photo ${index + 1}`}
               loading="lazy"
-              className="aspect-4/3 w-full object-cover"
+              className="aspect-4/3 w-full object-cover transition-transform duration-300 hover:scale-105"
             />
           </motion.button>
         ))}
@@ -41,14 +41,14 @@ export function PhotoGrid({ urls, context }: PhotoGridProps) {
 
       <Modal
         open={Boolean(openUrl)}
-        title="Photo"
+        title="Photo Detail"
         onClose={() => setOpenUrl(null)}
       >
         {openUrl ? (
           <img
             src={openUrl}
             alt={`${context} — full size`}
-            className="max-h-[70dvh] w-full rounded-card object-contain"
+            className="max-h-[70dvh] w-full rounded-2xl object-contain shadow-card"
           />
         ) : null}
       </Modal>

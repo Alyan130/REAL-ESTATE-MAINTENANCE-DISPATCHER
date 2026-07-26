@@ -34,11 +34,6 @@ export default function VendorsPage() {
 
   const list = useMemo(() => vendors.data ?? [], [vendors.data]);
 
-  /**
-   * A category with no active vendor is a silent failure: every ticket the AI
-   * classifies into it escalates to NEEDS_ATTENTION, and nothing says why. Vendor
-   * selection keys off `categories` alone, so this list is the real diagnosis.
-   */
   const uncovered = useMemo(
     () =>
       VENDOR_CATEGORIES.filter(
@@ -95,9 +90,9 @@ export default function VendorsPage() {
 
       {!vendors.loading && uncovered.length > 0 && list.length > 0 ? (
         <Alert tone="warn" title="Categories with no vendor">
-          <p>
+          <p className="text-xs">
             Nobody covers{" "}
-            <span className="font-semibold">
+            <span className="font-semibold text-ink-strong">
               {uncovered.map((category) => categoryLabel(category)).join(", ")}
             </span>
             . Any ticket the AI classifies into one of these will fail to dispatch and
@@ -106,7 +101,7 @@ export default function VendorsPage() {
           <button
             type="button"
             onClick={() => openInvite(uncovered)}
-            className="mt-2 text-sm font-semibold text-brand underline"
+            className="mt-2 text-xs font-semibold text-brand underline cursor-pointer"
           >
             Invite a vendor for these categories
           </button>
@@ -138,26 +133,26 @@ export default function VendorsPage() {
 
             return (
               <StaggerItem key={vendor.id}>
-                <Card>
-                  <CardBody className="flex flex-wrap items-start justify-between gap-4">
+                <Card className="hover:border-line transition-colors">
+                  <CardBody className="flex flex-wrap items-center justify-between gap-4">
                     <div className="min-w-0">
                       <div className="flex flex-wrap items-center gap-2">
-                        <p className="font-semibold text-ink-strong">{vendor.name}</p>
+                        <p className="font-bold text-ink-strong text-base">{vendor.name}</p>
                         <Badge tone={pending ? "warn" : "success"}>
                           {pending ? "Invite pending" : "Active"}
                         </Badge>
                       </div>
 
-                      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted">
+                      <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted font-medium">
                         {vendor.email ? (
                           <span className="inline-flex items-center gap-1.5">
-                            <Mail size={14} />
+                            <Mail size={13} className="text-brand shrink-0" />
                             {vendor.email}
                           </span>
                         ) : null}
                         {vendor.phone ? (
                           <span className="inline-flex items-center gap-1.5">
-                            <Phone size={14} />
+                            <Phone size={13} className="text-faint shrink-0" />
                             {vendor.phone}
                           </span>
                         ) : null}
@@ -175,9 +170,9 @@ export default function VendorsPage() {
                         )}
                       </div>
 
-                      <div className="mt-2 flex flex-wrap items-center gap-x-4 text-technical text-faint">
+                      <div className="mt-2 flex flex-wrap items-center gap-x-4 text-technical text-faint text-xs">
                         <span className="inline-flex items-center gap-1">
-                          <Star size={13} />
+                          <Star size={13} className="text-amber-500 fill-amber-500/20" />
                           {vendor.rating.toFixed(1)} rating
                         </span>
                         <span>{vendor.max_concurrent_jobs} concurrent jobs max</span>
@@ -189,7 +184,7 @@ export default function VendorsPage() {
                         <Button
                           size="sm"
                           variant="secondary"
-                          icon={<Send size={15} />}
+                          icon={<Send size={14} />}
                           loading={resendingId === vendor.id}
                           onClick={() => void handleResend(vendor)}
                         >
@@ -230,12 +225,12 @@ export default function VendorsPage() {
         onConfirm={() => void handleDeactivate()}
         body={
           <>
-            <p>
-              <span className="font-semibold">{removing?.name}</span> stops being
+            <p className="text-xs text-muted">
+              <span className="font-semibold text-ink-strong">{removing?.name}</span> stops being
               offered new jobs and their login is switched off.
             </p>
             {removing?.categories?.length ? (
-              <p className="mt-3">
+              <p className="mt-3 text-xs text-muted">
                 They currently cover{" "}
                 {removing.categories.map((c) => categoryLabel(c)).join(", ")} — check
                 someone else does too, or those tickets will start escalating.

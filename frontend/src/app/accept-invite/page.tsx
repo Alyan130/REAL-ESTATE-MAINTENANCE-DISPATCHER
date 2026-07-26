@@ -21,10 +21,6 @@ interface InviteFailure {
   offerLogin?: boolean;
 }
 
-/**
- * Every invite failure has a different remedy, so none of them collapse into a
- * generic error. Mapped from backend/app/services/auth_service.py :: accept_invite.
- */
 function describeFailure(error: unknown): InviteFailure {
   const { status, code, message, isNetworkError } = toApiError(error);
 
@@ -65,7 +61,6 @@ function describeFailure(error: unknown): InviteFailure {
       };
   }
 
-  // Fallback for a response that carried no code.
   if (status === 410) {
     return {
       message:
@@ -82,7 +77,6 @@ function AcceptInviteForm() {
   const searchParams = useSearchParams();
   const signIn = useAuthStore((state) => state.signIn);
 
-  // The token rides in the query string; the user never types or sees it.
   const token = searchParams.get("token") ?? "";
 
   const [password, setPassword] = useState("");
@@ -98,7 +92,7 @@ function AcceptInviteForm() {
           Open the invite straight from your email — the link carries a token that
           this page needs. If you typed the address by hand, that token is missing.
         </Alert>
-        <Link href="/login" className="text-sm font-semibold text-brand underline">
+        <Link href="/login" className="text-xs font-semibold text-brand underline hover:text-brand/80">
           Already have an account? Sign in
         </Link>
       </div>
@@ -128,7 +122,6 @@ function AcceptInviteForm() {
         confirm_password: confirmPassword,
       });
 
-      // Accepting logs the user straight in — no bounce back to the login screen.
       const role = signIn(access_token);
       router.replace(role ? homePathForRole(role) : "/login");
     } catch (error) {

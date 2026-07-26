@@ -16,16 +16,10 @@ import { formatDate } from "@/lib/format";
 import { isTransient } from "@/lib/status";
 import { useAsync, usePolling } from "@/lib/use-async";
 
-/**
- * The tenant's home. Everything internal — priority codes, vendor names, the raw
- * ERROR state — is withheld here; the backend returns those fields, and the
- * decision not to show them is deliberate.
- */
 export default function MyTicketsPage() {
   const tickets = useAsync(() => listTickets(), []);
   const list = tickets.data ?? [];
 
-  // A freshly submitted ticket sits at PENDING_UPLOAD for a few seconds.
   const settling = list.some((ticket) => isTransient(ticket.status));
   usePolling(settling, () => void tickets.reload({ silent: true }), {
     intervalMs: 4000,
@@ -49,7 +43,7 @@ export default function MyTicketsPage() {
           {tickets.error}{" "}
           <button
             type="button"
-            className="font-semibold underline"
+            className="font-semibold underline cursor-pointer"
             onClick={() => void tickets.reload()}
           >
             Try again
@@ -79,17 +73,17 @@ export default function MyTicketsPage() {
           {list.map((ticket) => (
             <StaggerItem key={ticket.id}>
               <motion.div
-                whileHover={{ y: -2, boxShadow: "0 6px 20px rgba(0,0,0,0.10)" }}
+                whileHover={{ y: -2, boxShadow: "0 6px 20px rgba(0,0,0,0.08)" }}
                 transition={{ duration: 0.2, ease: "easeOut" }}
-                className="rounded-card border border-line-soft bg-surface shadow-card"
+                className="rounded-2xl border border-line-soft bg-surface shadow-card hover:border-line transition-colors"
               >
                 <Link
                   href={`/my-tickets/${ticket.id}`}
-                  className="flex flex-wrap items-center justify-between gap-3 px-4 py-4"
+                  className="flex flex-wrap items-center justify-between gap-3 px-5 py-4"
                 >
                   <div className="min-w-0">
-                    <p className="font-semibold text-ink-strong">{ticket.title}</p>
-                    <p className="mt-0.5 text-sm text-muted">
+                    <p className="font-bold text-ink-strong text-base">{ticket.title}</p>
+                    <p className="mt-1 text-xs text-muted font-medium">
                       Submitted {formatDate(ticket.created_at)}
                     </p>
                   </div>
