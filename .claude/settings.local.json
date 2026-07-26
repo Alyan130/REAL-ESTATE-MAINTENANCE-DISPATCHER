@@ -8,7 +8,17 @@
       "Bash(where python *)",
       "Bash(pip list *)",
       "Bash(python -m pip list)",
-      "Bash(python -c \"from main import app; print\\('Routes:'\\); [print\\(f'  {r.methods} {r.path}'\\) for r in app.routes if hasattr\\(r, 'methods'\\)]\")"
+      "Bash(python -c \"from main import app; print\\('Routes:'\\); [print\\(f'  {r.methods} {r.path}'\\) for r in app.routes if hasattr\\(r, 'methods'\\)]\")",
+      "Bash(npm -v)",
+      "Bash(npm view *)",
+      "Bash(npx --yes create-next-app@16.2.11 frontend --ts --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm --yes)",
+      "Bash(npm install *)",
+      "Bash(npx tsc *)",
+      "Bash(npx next *)",
+      "Bash(npx eslint *)",
+      "Bash(cd *)",
+      "WebSearch",
+      "Bash(git add *)"
     ]
   }
 }

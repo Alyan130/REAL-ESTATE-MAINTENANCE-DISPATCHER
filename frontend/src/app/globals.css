@@ -1,0 +1,124 @@
+@import "tailwindcss";
+
+/*
+ * Design tokens — derived from docs/context/design.md ("Notion Warm Workspace").
+ *
+ * Warm minimalism, whisper borders, warm neutral palette (#fff8f5, #f6f5f4, #f5ece8),
+ * off-black high-contrast text (#0f0c0a / #1e1b19), and Notion Blue (#0075de) as accent.
+ */
+@theme {
+  /* Surfaces */
+  --color-canvas: #fff8f5;
+  --color-surface: #ffffff;
+  --color-sunken: #fbf2ee;
+  --color-surface-container: #f5ece8;
+  --color-surface-high: #efe6e2;
+  --color-shell: #f6f5f4;
+  --color-shell-strong: #0f0c0a;
+  --color-shell-hover: #e9e1dd;
+
+  /* Text */
+  --color-ink: #1e1b19;
+  --color-ink-strong: #0f0c0a;
+  --color-muted: #454749;
+  --color-faint: #717784;
+
+  /* Lines & Whisper Borders */
+  --color-line: #c1c6d5;
+  --color-line-soft: #e9e1dd;
+
+  /* Brand - Azul Notion */
+  --color-brand: #0075de;
+  --color-brand-hover: #005eb4;
+  --color-brand-soft: #e7eff5;
+
+  /* Semantic Tones */
+  --color-success: #2e9e63;
+  --color-success-soft: #e9f4ee;
+  --color-warn: #cc8433;
+  --color-warn-soft: #fbf2e6;
+  --color-danger: #ba1a1a;
+  --color-danger-soft: #ffdad6;
+  --color-info: #005eb4;
+  --color-info-soft: #d5e3ff;
+
+  /* Type */
+  --font-sans: var(--font-inter), var(--font-open-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "SFMono-Regular", monospace;
+
+  /* Shape & depth */
+  --radius-card: 1rem;
+  --radius-pill: 9999px;
+  --shadow-card: 0 2px 12px rgba(0, 0, 0, 0.04);
+  --shadow-lift: 0 6px 20px rgba(0, 0, 0, 0.08);
+  --shadow-overlay: 0 24px 60px rgba(0, 0, 0, 0.12);
+
+  /* Skeleton shimmer animation */
+  --animate-shimmer: shimmer 1.6s ease-in-out infinite;
+
+  @keyframes shimmer {
+    0% {
+      opacity: 0.4;
+    }
+    50% {
+      opacity: 0.9;
+    }
+    100% {
+      opacity: 0.4;
+    }
+  }
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background-color: var(--color-canvas);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    line-height: 1.6;
+  }
+
+  /* Focus ring contract: 2px Notion Blue ring, offset 2px. */
+  :focus-visible {
+    outline: 2px solid var(--color-brand);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  h1,
+  h2,
+  h3 {
+    color: var(--color-ink-strong);
+    font-weight: 700;
+    letter-spacing: -0.015em;
+    line-height: 1.25;
+  }
+}
+
+@layer utilities {
+  /* Technical values: IDs, timestamps, counts. */
+  .text-technical {
+    font-family: var(--font-mono);
+    font-size: 0.8125rem;
+    letter-spacing: -0.01em;
+  }
+
+  .label-ui {
+    font-size: 0.875rem;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
