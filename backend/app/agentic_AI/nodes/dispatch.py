@@ -15,11 +15,9 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict
 
-from app.core.email import send_job_offer_email
 from app.database import SessionLocal
 from app.models.notification import Notification
 from app.models.ticket import Ticket
-from app.models.vendor import Vendor
 from app.agentic_AI.ticket_state import TicketState
 from app.agentic_AI.tools.dispatch import create_vendor_job, find_best_vendor
 
@@ -65,41 +63,32 @@ def route_after_selection(state: TicketState) -> str:
 
 
 async def dispatch_job_node(state: TicketState) -> Dict[str, Any]:
-    """Create the VendorJob, email the vendor, mark the ticket DISPATCHED."""
+    """
+    Create the VendorJob and mark the ticket DISPATCHED.
+
+    The offer email is deliberately NOT sent here. It carries the tokenized chat
+    link, and the token can only be minted once the job row exists — so
+    `open_negotiation` (the next node) owns both, and owns them together. Sending
+    from both places would mail the vendor twice.
+    """
     db = SessionLocal()
     try:
-        create_vendor_job(
+        job = create_vendor_job(
             db,
             ticket_id=uuid.UUID(state.ticket_id),
             vendor_id=uuid.UUID(state.assigned_vendor_id),
         )
 
-        vendor = db.get(Vendor, uuid.UUID(state.assigned_vendor_id))
         ticket = db.get(Ticket, state.ticket_id)
         if ticket is None:
             return {"error": "ticket not found"}
-
-        # Fire-and-forget email — a failure must not roll back the created job.
-        if vendor and vendor.email:
-            send_job_offer_email(
-                to_email=vendor.email,
-                vendor_name=vendor.name,
-                ticket_title=ticket.title,
-                ticket_summary=ticket.ai_summary or ticket.description or "",
-                ticket_id=state.ticket_id,
-            )
-        else:
-            logger.warning(
-                "dispatch_job_node: vendor %s has no email; skipping offer for ticket %s",
-                state.assigned_vendor_id,
-                state.ticket_id,
-            )
 
         ticket.status = "DISPATCHED"
         ticket.updated_at = datetime.utcnow()
         db.commit()
 
         return {
+            "active_vendor_job_id": str(job.id),
             "vendors_contacted": [state.assigned_vendor_id],
             "dispatch_attempts": 1,
             "current_status": "DISPATCHED",

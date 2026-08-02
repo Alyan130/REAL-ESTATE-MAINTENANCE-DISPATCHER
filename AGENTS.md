@@ -49,3 +49,9 @@ See [@docs/context/user-story.md](docs/context/user-story.md)
 ## Design System:
 **Use for Consistent UI across all project frontend**
 See [@docs/context/design.md](docs/context/design.md)
+
+
+## Recent Context:
+**Always Read These Files Before Starting Any Task**
+- [CHECKPOINT.md](CHECKPOINT.md) - **Last Implemenation Details**
+- [CHANGE-LOG.md](CHANGE-LOG.md) - **Read Last 2-3 Entries**

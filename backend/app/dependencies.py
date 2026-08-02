@@ -18,6 +18,8 @@ from app.database import get_db
 from app.exceptions import ForbiddenError, NotAuthenticatedError
 from app.models.user import User
 from app.services.auth_service import AuthService
+from app.services.category_service import CategoryService
+from app.services.negotiation_service import NegotiationService
 from app.services.property_service import PropertyService
 from app.services.tenant_service import TenantService
 from app.services.ticket_service import TicketService
@@ -38,8 +40,9 @@ def get_current_user(credentials: BearerDep, db: DbDep) -> User:
     """
     Decode the Bearer token and load its user.
 
-    Every failure — missing header, bad signature, expired, unknown or disabled
-    user — is reported identically, so the response never confirms which.
+    Every failure — missing header, bad signature, expired, wrong token type,
+    unknown or disabled user — is reported identically, so the response never
+    confirms which.
     """
     if credentials is None:
         raise NotAuthenticatedError()
@@ -47,6 +50,14 @@ def get_current_user(credentials: BearerDep, db: DbDep) -> User:
     try:
         payload = decode_token(credentials.credentials)
     except (jwt.ExpiredSignatureError, jwt.PyJWTError):
+        raise NotAuthenticatedError()
+
+    # Only a login token authenticates a session. Without this check an invite
+    # token — which carries the same `sub` — works as a Bearer token, and every
+    # new token type widens that hole. "job" tokens are safe by accident (their
+    # `sub` is a vendor_jobs.id, so the lookup below misses), but relying on an
+    # accident is not a guard.
+    if payload.get("type") != "login":
         raise NotAuthenticatedError()
 
     user_id: str | None = payload.get("sub")
@@ -106,8 +117,18 @@ def get_ticket_service(db: DbDep) -> TicketService:
     return TicketService(db)
 
 
+def get_category_service(db: DbDep) -> CategoryService:
+    return CategoryService(db)
+
+
+def get_negotiation_service(db: DbDep) -> NegotiationService:
+    return NegotiationService(db)
+
+
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 PropertyServiceDep = Annotated[PropertyService, Depends(get_property_service)]
 TenantServiceDep = Annotated[TenantService, Depends(get_tenant_service)]
 VendorServiceDep = Annotated[VendorService, Depends(get_vendor_service)]
 TicketServiceDep = Annotated[TicketService, Depends(get_ticket_service)]
+CategoryServiceDep = Annotated[CategoryService, Depends(get_category_service)]
+NegotiationServiceDep = Annotated[NegotiationService, Depends(get_negotiation_service)]

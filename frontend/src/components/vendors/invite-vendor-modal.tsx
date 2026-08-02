@@ -6,11 +6,11 @@ import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/field";
 import { Modal } from "@/components/ui/modal";
+import { listCategories } from "@/lib/api/categories";
 import { inviteVendor } from "@/lib/api/vendors";
 import { toApiError } from "@/lib/errors";
 import { cn } from "@/lib/cn";
-import { categoryLabel } from "@/lib/status";
-import { VENDOR_CATEGORIES, type VendorCategory } from "@/lib/types";
+import { useAsync } from "@/lib/use-async";
 import { toast } from "@/stores/toast-store";
 
 interface InviteVendorModalProps {
@@ -18,7 +18,7 @@ interface InviteVendorModalProps {
   onClose: () => void;
   onInvited: () => void;
   /** Pre-tick categories with no coverage, when invited from a gap warning. */
-  suggestedCategories?: VendorCategory[];
+  suggestedCategories?: string[];
 }
 
 const DEFAULT_MAX_JOBS = 3;
@@ -32,13 +32,17 @@ export function InviteVendorModal({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
-  const [categories, setCategories] = useState<VendorCategory[]>(suggestedCategories);
+  const [categories, setCategories] = useState<string[]>(suggestedCategories);
   const [maxJobs, setMaxJobs] = useState(String(DEFAULT_MAX_JOBS));
   const [error, setError] = useState<string | null>(null);
   const [emailError, setEmailError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const toggleCategory = (category: VendorCategory) =>
+  // The PM's own vocabulary, not a hardcoded list — "other" is excluded because
+  // a vendor covering the intake fallback would defeat its escalation.
+  const available = useAsync(() => listCategories(true), []);
+
+  const toggleCategory = (category: string) =>
     setCategories((previous) =>
       previous.includes(category)
         ? previous.filter((value) => value !== category)
@@ -128,15 +132,26 @@ export function InviteVendorModal({
               Optional, but a vendor with none is never matched to a job
             </span>
           </legend>
+          {available.loading && !available.data ? (
+            <p className="text-xs text-muted">Loading your categories…</p>
+          ) : null}
+
+          {!available.loading && (available.data?.length ?? 0) === 0 ? (
+            <p className="text-xs text-muted">
+              You have no categories to assign yet. Add one under Categories
+              first — a vendor with none is never matched to a job.
+            </p>
+          ) : null}
+
           <div className="flex flex-wrap gap-2">
-            {VENDOR_CATEGORIES.map((category) => {
-              const selected = categories.includes(category);
+            {(available.data ?? []).map((category) => {
+              const selected = categories.includes(category.name);
               return (
                 <button
-                  key={category}
+                  key={category.id}
                   type="button"
                   aria-pressed={selected}
-                  onClick={() => toggleCategory(category)}
+                  onClick={() => toggleCategory(category.name)}
                   className={cn(
                     "rounded-full border px-3 py-1.5 text-xs font-semibold transition-all cursor-pointer",
                     selected
@@ -144,7 +159,7 @@ export function InviteVendorModal({
                       : "border-line-soft bg-surface text-muted hover:bg-sunken hover:border-line hover:text-ink-strong",
                   )}
                 >
-                  {categoryLabel(category)}
+                  {category.label}
                 </button>
               );
             })}

@@ -2,16 +2,19 @@
 backend/agentic_AI/nodes/intake.py
 """
 import logging
+import uuid
 from typing import Dict, Any, List
 
-from langchain_openai import ChatOpenAI
 from langchain_core.messages import HumanMessage
 
 from app.config import settings
 from app.database import SessionLocal
 from app.models.ticket import Ticket
+from app.agentic_AI import prompts
+from app.agentic_AI.llm import get_structured_model
 from app.agentic_AI.ticket_state import TicketState
 from app.agentic_AI.output_schemas import IntakeClassification
+from app.agentic_AI.tools.intake import load_allowed_categories, normalize_category
 
 logger = logging.getLogger(__name__)
 
@@ -27,13 +30,23 @@ async def classify_node(state: TicketState) -> Dict[str, Any]:
         ticket_title = ticket.title or ""
         media_urls = ticket.media_urls or []
 
-        llm = ChatOpenAI(model="gpt-4o", temperature=0)
-        structured_llm = llm.with_structured_output(IntakeClassification)
-        
+        # The vocabulary is per-PM and editable, so it is read at call time and
+        # listed in the prompt rather than baked into the output schema.
+        allowed = load_allowed_categories(db, uuid.UUID(state.pm_id))
+
+        structured_llm = get_structured_model(IntakeClassification)
+
         content = [
-            {"type": "text", "text": f"Title: {ticket_title}\nDescription: {ticket_description}\n\nPlease classify this maintenance ticket based on the provided text and images (if any). P1: emergency/safety/flooding/no power; P2: urgent/affects daily living; P3: standard/inconvenient; P4: minor/cosmetic. requires_pm_approval is False ONLY for P1."}
+            {
+                "type": "text",
+                "text": prompts.build_intake_prompt(
+                    title=ticket_title,
+                    description=ticket_description,
+                    categories=allowed,
+                ),
+            }
         ]
-        
+
         for url in media_urls:
             content.append({
                 "type": "image_url",
@@ -42,9 +55,17 @@ async def classify_node(state: TicketState) -> Dict[str, Any]:
 
         msg = HumanMessage(content=content)
         classification: IntakeClassification = await structured_llm.ainvoke([msg])
-        
+
+        # `category` is a plain str on the schema, so the model's answer is
+        # guidance until this check folds it onto the PM's actual vocabulary.
+        # Anything unrecognised becomes "other", which matches no vendor and
+        # routes the ticket to the PM instead of failing the graph.
+        category = normalize_category(
+            classification.category, [option.name for option in allowed]
+        )
+
         return {
-            "category": classification.category,
+            "category": category,
             "priority": classification.priority,
             "ai_summary": classification.ai_summary,
             "requires_pm_approval": classification.requires_pm_approval,

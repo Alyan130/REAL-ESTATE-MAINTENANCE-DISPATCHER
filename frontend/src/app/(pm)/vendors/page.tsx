@@ -13,6 +13,7 @@ import { EmptyState } from "@/components/ui/empty-state";
 import { FadeIn, StaggerItem, StaggerList } from "@/components/ui/motion-list";
 import { PageHeader } from "@/components/ui/page-header";
 import { RowsSkeleton } from "@/components/ui/skeleton";
+import { listCategories } from "@/lib/api/categories";
 import {
   deactivateVendor,
   listVendors,
@@ -20,14 +21,17 @@ import {
 } from "@/lib/api/vendors";
 import { errorMessage } from "@/lib/errors";
 import { categoryLabel } from "@/lib/status";
-import { VENDOR_CATEGORIES, type Vendor, type VendorCategory } from "@/lib/types";
+import type { Vendor } from "@/lib/types";
 import { useAsync } from "@/lib/use-async";
 import { toast } from "@/stores/toast-store";
 
 export default function VendorsPage() {
   const vendors = useAsync(() => listVendors(), []);
+  // Coverage is measured against the PM's own categories, so a trade they
+  // added themselves counts as a gap just like a built-in one.
+  const categories = useAsync(() => listCategories(true), []);
   const [inviting, setInviting] = useState(false);
-  const [suggested, setSuggested] = useState<VendorCategory[]>([]);
+  const [suggested, setSuggested] = useState<string[]>([]);
   const [removing, setRemoving] = useState<Vendor | null>(null);
   const [deactivating, setDeactivating] = useState(false);
   const [resendingId, setResendingId] = useState<string | null>(null);
@@ -36,10 +40,13 @@ export default function VendorsPage() {
 
   const uncovered = useMemo(
     () =>
-      VENDOR_CATEGORIES.filter(
-        (category) => !list.some((vendor) => vendor.categories?.includes(category)),
-      ),
-    [list],
+      (categories.data ?? [])
+        .filter(
+          (category) =>
+            !list.some((vendor) => vendor.categories?.includes(category.name)),
+        )
+        .map((category) => category.name),
+    [categories.data, list],
   );
 
   const handleResend = async (vendor: Vendor) => {
@@ -69,8 +76,8 @@ export default function VendorsPage() {
     }
   };
 
-  const openInvite = (categories: VendorCategory[] = []) => {
-    setSuggested(categories);
+  const openInvite = (preselect: string[] = []) => {
+    setSuggested(preselect);
     setInviting(true);
   };
 

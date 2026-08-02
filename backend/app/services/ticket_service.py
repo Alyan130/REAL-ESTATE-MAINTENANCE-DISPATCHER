@@ -10,14 +10,15 @@ finish.
 """
 from __future__ import annotations
 
-import asyncio
 import logging
 import uuid
 from typing import Callable, Protocol
 
 from sqlalchemy.orm import Session
 
+from app.agentic_AI.runtime import run_async
 from app.agentic_AI.ticket_state import TicketState
+from app.agentic_AI.tracing import STAGE_DISPATCH, STAGE_INTAKE, trace_config
 from app.core.storage import upload_file
 from app.database import SessionLocal
 from app.exceptions import ForbiddenError, NotFoundError, TicketNotAwaitingApprovalError
@@ -50,7 +51,7 @@ async def _invoke_graph(state: TicketState, config: dict) -> None:
     from app.agentic_AI.agents.orchestration_agent import get_parent_graph
     from app.agentic_AI.checkpointer import get_checkpointer
 
-    with get_checkpointer() as checkpointer:
+    async with get_checkpointer() as checkpointer:
         graph = get_parent_graph(checkpointer)
         await graph.ainvoke(state.model_dump(), config=config)
 
@@ -67,8 +68,14 @@ async def _resume_approval_graph(ticket_id: uuid.UUID, approved: bool) -> bool:
     from app.agentic_AI.agents.orchestration_agent import get_parent_graph
     from app.agentic_AI.checkpointer import get_checkpointer
 
-    config = {"configurable": {"thread_id": f"ticket-{ticket_id}"}}
-    with get_checkpointer() as checkpointer:
+    config = trace_config(
+        f"ticket-{ticket_id}",
+        stage=STAGE_DISPATCH,
+        run_name=f"pm-{'approve' if approved else 'reject'}:{ticket_id}",
+        ticket_id=str(ticket_id),
+        pm_decision="approved" if approved else "rejected",
+    )
+    async with get_checkpointer() as checkpointer:
         graph = get_parent_graph(checkpointer)
         snapshot = await graph.aget_state(config)
         # `.next` is non-empty only when the graph is paused with pending work
@@ -81,10 +88,23 @@ async def _resume_approval_graph(ticket_id: uuid.UUID, approved: bool) -> bool:
 
 def _dispatch_from_db(ticket_id: uuid.UUID) -> None:
     """
-    Fallback dispatch when no live checkpoint exists: rebuild TicketState from the
-    DB (hydrating `category`, which vendor matching keys off) and run dispatch_graph.
+    Fallback dispatch when no live checkpoint exists: rebuild TicketState from
+    the DB (hydrating `category`, which vendor matching keys off) and run
+    dispatch → negotiate.
+
+    This runs the **post-approval** graph, not `dispatch_graph`. Negotiation
+    contains `interrupt()` calls, which raise without a checkpointer — and
+    `dispatch_graph` is compiled without one on purpose. Running bare dispatch
+    here would leave the ticket at DISPATCHED with a vendor who was never
+    contacted, silently, on the one path that only runs when something already
+    went wrong.
+
+    The thread is namespaced by attempt number so the next-vendor loop gets a
+    fresh thread each time rather than colliding with a completed one.
     """
-    from app.agentic_AI.agents.dispatch_agent import dispatch_graph
+    from app.agentic_AI.agents.orchestration_agent import get_post_approval_graph
+    from app.agentic_AI.checkpointer import get_checkpointer
+    from app.models.vendor_job import VendorJob
 
     db: Session = SessionLocal()
     try:
@@ -98,6 +118,11 @@ def _dispatch_from_db(ticket_id: uuid.UUID) -> None:
             logger.error("Property not found for ticket %s during fallback dispatch", ticket_id)
             return
 
+        attempt = (
+            db.query(VendorJob).filter(VendorJob.ticket_id == ticket_id).count()
+        )
+        thread_id = f"dispatch-{ticket.id}-{attempt}"
+
         state = TicketState(
             ticket_id=str(ticket.id),
             tenant_id=str(ticket.tenant_id),
@@ -107,9 +132,27 @@ def _dispatch_from_db(ticket_id: uuid.UUID) -> None:
             priority=ticket.priority,
             ai_summary=ticket.ai_summary,
             pm_approved=True,
+            negotiation_thread_id=thread_id,
         )
-        config = {"configurable": {"thread_id": f"dispatch-{ticket.id}"}}
-        asyncio.run(dispatch_graph.ainvoke(state.model_dump(), config=config))
+        config = trace_config(
+            thread_id,
+            stage=STAGE_DISPATCH,
+            run_name=f"dispatch-fallback:{ticket.id}",
+            ticket_id=str(ticket.id),
+            pm_id=str(prop.pm_id),
+            priority=ticket.priority,
+            attempt=attempt,
+            # This path only runs when the checkpoint was already lost, so mark
+            # it — a run list full of these means the TTL is too short.
+            fallback=True,
+        )
+
+        async def _run() -> None:
+            async with get_checkpointer() as checkpointer:
+                graph = get_post_approval_graph(checkpointer)
+                await graph.ainvoke(state.model_dump(), config=config)
+
+        run_async(_run())
         logger.info("Fallback dispatch completed for ticket %s", ticket_id)
     finally:
         db.close()
@@ -135,7 +178,7 @@ def run_approval(ticket_id: uuid.UUID) -> None:
     gone, fall back to a fresh DB-based dispatch. Escalate on unrecoverable failure.
     """
     try:
-        resumed = asyncio.run(_resume_approval_graph(ticket_id, approved=True))
+        resumed = run_async(_resume_approval_graph(ticket_id, approved=True))
         if resumed:
             logger.info("Resumed approval graph for ticket %s", ticket_id)
             return
@@ -188,15 +231,26 @@ def process_ticket_submission(
             logger.error("Property not found for ticket %s", ticket_id)
             return
 
+        thread_id = f"ticket-{ticket.id}"
+        config = trace_config(
+            thread_id,
+            stage=STAGE_INTAKE,
+            run_name=f"ticket-submission:{ticket.id}",
+            ticket_id=str(ticket.id),
+            pm_id=str(prop.pm_id),
+        )
         initial_state = TicketState(
             ticket_id=str(ticket.id),
             tenant_id=str(ticket.tenant_id),
             property_id=str(ticket.property_id),
             pm_id=str(prop.pm_id),
+            # Carried in state so `open_negotiation` can mirror it onto the
+            # VendorJob row — a later resume then looks the thread up rather
+            # than reconstructing a naming convention.
+            negotiation_thread_id=thread_id,
         )
-        config = {"configurable": {"thread_id": f"ticket-{ticket.id}"}}
 
-        asyncio.run(_invoke_graph(initial_state, config))
+        run_async(_invoke_graph(initial_state, config))
         logger.info("Graph completed for ticket %s", ticket_id)
 
     except Exception:

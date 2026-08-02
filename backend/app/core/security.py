@@ -19,6 +19,10 @@ _TOKEN_LIFETIMES: dict[str, timedelta] = {
     "login": timedelta(days=60),
     "invite": timedelta(hours=48),
     "reset": timedelta(hours=1),
+    # A vendor chat link. `sub` is a vendor_jobs.id, NOT a user id — the token
+    # is scoped to one job, so a forwarded link cannot reach another ticket.
+    # Nothing is stored: the job's status is the revocation mechanism.
+    "job": timedelta(days=14),
 }
 
 
@@ -52,6 +56,7 @@ def create_token(
         "login"  → 60 days
         "invite" → 48 hours
         "reset"  → 1 hour
+        "job"    → 14 days   (sub is a vendor_jobs.id, not a user id)
     """
     if token_type not in _TOKEN_LIFETIMES:
         raise ValueError(

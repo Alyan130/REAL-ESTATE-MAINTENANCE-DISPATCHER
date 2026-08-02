@@ -1,5 +1,0 @@
-- [ ] Add `REDIS_URL` to `backend/.env`.
-- [ ] Add `REDIS_URL` to the `Settings` class in `backend/core/config.py`.
-- [ ] Import and expose `RedisSaver` connected via `redis-py` in `backend/agentic_AI/checkpointer.py`.
-- [ ] Ensure SSL settings are handled appropriately for the Upstash `rediss://...` url.
-- [ ] Connect `RedisSaver` to the LangGraph compilation step.

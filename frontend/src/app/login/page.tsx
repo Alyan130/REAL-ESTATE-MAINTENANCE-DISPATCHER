@@ -3,7 +3,6 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 
-import { DemoCredentials, DemoInviteLinks } from "@/components/demo/demo-notice";
 import { AuthLayout } from "@/components/layout/auth-layout";
 import { Alert } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -105,16 +104,8 @@ function LoginForm() {
     }
   };
 
-  const fillDemoAccount = (demoEmail: string, demoPassword: string) => {
-    setEmail(demoEmail);
-    setPassword(demoPassword);
-    setFailure(null);
-  };
-
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4" noValidate>
-      <DemoCredentials onPick={fillDemoAccount} />
-
       {sessionExpired && !failure ? (
         <Alert tone="info">Your session ended. Please sign in again.</Alert>
       ) : null}
@@ -147,8 +138,6 @@ function LoginForm() {
       <p className="text-center text-sm text-muted">
         Accounts are created by invitation from a property manager.
       </p>
-
-      <DemoInviteLinks />
     </form>
   );
 }

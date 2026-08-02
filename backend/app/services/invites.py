@@ -6,9 +6,14 @@ first send and every resend, so it lives in one place.
 """
 from __future__ import annotations
 
+import logging
+
+from app.config import settings
 from app.core.email import send_invite_email
 from app.core.security import create_token, decode_token
 from app.models.user import User
+
+logger = logging.getLogger(__name__)
 
 
 def issue_invite(user: User, name: str) -> None:
@@ -31,3 +36,18 @@ def issue_invite(user: User, name: str) -> None:
     # Fire-and-forget: send_invite_email swallows and logs its own failures, so a
     # mail outage never rolls back the account it just created.
     send_invite_email(to_email=user.email, name=name, role=user.role, token=token)
+
+    # Local only. Resend's sandbox sender (onboarding@resend.dev) delivers to the
+    # Resend account owner and silently drops everything else, so an invite to a
+    # test address never arrives and the failure is invisible — send_invite_email
+    # catches its own errors by design. Without this line there is no way to
+    # accept an invite while testing. Gated on BASE_URL being localhost so a
+    # deployed environment never writes an account-granting link to its logs,
+    # which `docs/rules/security.md` forbids.
+    if "localhost" in settings.BASE_URL or "127.0.0.1" in settings.BASE_URL:
+        logger.info(
+            "[dev] invite link for %s: %s/accept-invite?token=%s",
+            user.email,
+            settings.BASE_URL,
+            token,
+        )

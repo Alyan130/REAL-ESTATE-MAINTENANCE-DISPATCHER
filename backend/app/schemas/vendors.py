@@ -14,16 +14,16 @@ import uuid
 
 from pydantic import BaseModel, EmailStr
 
-from app.core.categories import VendorCategory
-
 
 class CreateVendorRequest(BaseModel):
     name: str
     email: EmailStr
     phone: str | None = None
-    # Constrained to the shared vendor vocabulary — an off-list category (e.g.
-    # "HVAC" or "air conditioning") is rejected at the API edge (422).
-    categories: list[VendorCategory] | None = None
+    # Plain strings: the vendor vocabulary is per-PM and lives in
+    # `category_settings`, so it isn't known at import time and can't be a
+    # Literal. VendorService checks these against the PM's own categories and
+    # raises 400 UNKNOWN_CATEGORY — previously this was a 422 from Pydantic.
+    categories: list[str] | None = None
     max_concurrent_jobs: int = 3
 
 

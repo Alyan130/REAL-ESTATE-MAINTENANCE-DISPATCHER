@@ -80,16 +80,20 @@ def send_job_offer_email(
     vendor_name: str,
     ticket_title: str,
     ticket_summary: str,
-    ticket_id: str,
+    chat_url: str,
 ) -> None:
     """
     Send a maintenance job offer to a vendor via Resend.
 
-    Fire-and-forget: dispatch nodes call this after creating the VendorJob row,
-    so a mail failure is logged but never raised — it must not roll back the job.
-    The CTA links to the vendor portal where the vendor submits a quote.
+    Fire-and-forget: the negotiation opener calls this after minting the chat
+    token, so a mail failure is logged but never raised — it must not roll back
+    the job it was announcing.
+
+    `chat_url` is a tokenized link to the vendor chat page. It is built by the
+    caller (which holds the token) rather than here, so this module stays a
+    renderer and never touches `core/security`.
     """
-    job_url = f"{settings.BASE_URL}/vendor/jobs/{ticket_id}"
+    job_url = chat_url
 
     html_body = f"""
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -118,7 +122,7 @@ def send_job_offer_email(
                 font-weight: bold;
             "
         >
-            View Job &amp; Submit Quote
+            View Job &amp; Reply
         </a>
         <p style="margin-top: 24px; font-size: 13px; color: #6b7280;">
             If you're unavailable, no action is needed — the job will be offered
@@ -136,6 +140,113 @@ def send_job_offer_email(
                 "html": html_body,
             }
         )
-        logger.info("Job offer email sent to %s for ticket %s", to_email, ticket_id)
+        logger.info("Job offer email sent to %s", to_email)
     except Exception:
-        logger.exception("Failed to send job offer email to %s for ticket %s", to_email, ticket_id)
+        logger.exception("Failed to send job offer email to %s", to_email)
+
+
+def send_negotiation_message_email(
+    to_email: str,
+    vendor_name: str,
+    ticket_title: str,
+    body: str,
+    chat_url: str,
+) -> None:
+    """
+    Tell a vendor there's a new message waiting on the job thread.
+
+    The message body is included so the vendor can read it without clicking, but
+    replies only happen in the portal — that keeps the whole negotiation in one
+    auditable transcript rather than split across an inbox.
+    """
+    html_body = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>New message about your job</h2>
+        <p>Hi {vendor_name},</p>
+        <div style="
+            padding: 16px;
+            background-color: #f3f4f6;
+            border-radius: 6px;
+            margin: 16px 0;
+        ">
+            <p style="margin: 0 0 8px; font-weight: bold;">{ticket_title}</p>
+            <p style="margin: 0; color: #374151; white-space: pre-wrap;">{body}</p>
+        </div>
+        <a
+            href="{chat_url}"
+            style="
+                display: inline-block;
+                padding: 12px 24px;
+                background-color: #2563eb;
+                color: #ffffff;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: bold;
+            "
+        >
+            Reply
+        </a>
+    </div>
+    """
+
+    try:
+        resend.Emails.send(
+            {
+                "from": "Real Estate Dispatcher <onboarding@resend.dev>",
+                "to": [to_email],
+                "subject": f"Re: {ticket_title}",
+                "html": html_body,
+            }
+        )
+        logger.info("Negotiation message email sent to %s", to_email)
+    except Exception:
+        logger.exception("Failed to send negotiation message email to %s", to_email)
+
+
+def send_job_confirmed_email(
+    to_email: str,
+    vendor_name: str,
+    ticket_title: str,
+    price: str,
+    availability: str,
+    property_address: str,
+) -> None:
+    """
+    Confirm an approved job. This is the first message that carries the street
+    address — it is deliberately withheld from the chat page until the job is
+    APPROVED, since that page is reachable by anyone holding a forwarded link.
+    """
+    html_body = f"""
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2>Job confirmed</h2>
+        <p>Hi {vendor_name},</p>
+        <p>Your quote has been approved. Here are the details:</p>
+        <div style="
+            padding: 16px;
+            background-color: #f3f4f6;
+            border-radius: 6px;
+            margin: 16px 0;
+        ">
+            <p style="margin: 0 0 8px; font-weight: bold;">{ticket_title}</p>
+            <p style="margin: 0 0 4px; color: #374151;">Agreed price: {price}</p>
+            <p style="margin: 0 0 4px; color: #374151;">Attending: {availability}</p>
+            <p style="margin: 0; color: #374151;">Address: {property_address}</p>
+        </div>
+        <p style="font-size: 13px; color: #6b7280;">
+            If anything changes, reply to the job thread.
+        </p>
+    </div>
+    """
+
+    try:
+        resend.Emails.send(
+            {
+                "from": "Real Estate Dispatcher <onboarding@resend.dev>",
+                "to": [to_email],
+                "subject": f"Job confirmed: {ticket_title}",
+                "html": html_body,
+            }
+        )
+        logger.info("Job confirmation email sent to %s", to_email)
+    except Exception:
+        logger.exception("Failed to send job confirmation email to %s", to_email)

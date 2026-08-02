@@ -45,7 +45,6 @@ class NotFoundError(AppError):
     code = "NOT_FOUND"
     message = "Not found."
 
-
 class ForbiddenError(AppError):
     status_code = status.HTTP_403_FORBIDDEN
     code = "FORBIDDEN"
@@ -137,6 +136,82 @@ class TicketNotAwaitingApprovalError(AppError):
     status_code = status.HTTP_409_CONFLICT
     code = "TICKET_NOT_AWAITING_APPROVAL"
     message = "Ticket is not awaiting approval."
+
+
+# ─── Categories ──────────────────────────────────────────────────────────────
+
+
+class DuplicateCategoryError(AppError):
+    status_code = status.HTTP_400_BAD_REQUEST
+    code = "DUPLICATE_CATEGORY"
+    message = "You already have a category with that name."
+
+
+class UnknownCategoryError(AppError):
+    """A category slug that is not in this PM's vocabulary."""
+
+    status_code = status.HTTP_400_BAD_REQUEST
+    code = "UNKNOWN_CATEGORY"
+    message = "That category doesn't exist."
+
+
+class ProtectedCategoryError(AppError):
+    """`other` is the intake fallback — the escalation path breaks without it."""
+
+    status_code = status.HTTP_400_BAD_REQUEST
+    code = "PROTECTED_CATEGORY"
+    message = "The 'Other' category can't be removed."
+
+
+# ─── Vendor chat / negotiation ───────────────────────────────────────────────
+
+
+class ChatLinkExpiredError(AppError):
+    status_code = status.HTTP_410_GONE
+    code = "CHAT_LINK_EXPIRED"
+    message = "This link has expired. Ask the property manager to send a new one."
+
+
+class ChatClosedError(AppError):
+    """The job moved on — declined, superseded by another vendor, or timed out."""
+
+    status_code = status.HTTP_410_GONE
+    code = "CHAT_CLOSED"
+    message = "This job is no longer open."
+
+
+class ChatReadOnlyError(AppError):
+    """The job is settled (approved/completed): history stays readable, replies don't."""
+
+    status_code = status.HTTP_409_CONFLICT
+    code = "CHAT_READ_ONLY"
+    message = "This conversation is closed to new messages."
+
+
+class MessageTooFastError(AppError):
+    status_code = status.HTTP_429_TOO_MANY_REQUESTS
+    code = "MESSAGE_TOO_FAST"
+    message = "You're sending messages too quickly. Try again in a moment."
+
+
+class NegotiationNotFoundError(AppError):
+    status_code = status.HTTP_404_NOT_FOUND
+    code = "NEGOTIATION_NOT_FOUND"
+    message = "No active negotiation for this ticket."
+
+
+class NegotiationNotAwaitingDecisionError(AppError):
+    status_code = status.HTTP_409_CONFLICT
+    code = "NEGOTIATION_NOT_AWAITING_DECISION"
+    message = "This negotiation isn't waiting on your decision."
+
+
+class CounterLimitReachedError(AppError):
+    """One counter round, enforced here as well as in the graph and the column."""
+
+    status_code = status.HTTP_409_CONFLICT
+    code = "COUNTER_LIMIT_REACHED"
+    message = "You've already sent a counter-offer for this vendor."
 
 
 # ─── Handlers ────────────────────────────────────────────────────────────────

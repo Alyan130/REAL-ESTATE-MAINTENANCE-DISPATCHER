@@ -10,8 +10,9 @@ Used to onboard a new agent without burning token limit on full history.
 
 ## Steps
 
-### 1. Read CHANGE-LOG.md
+### 1. Read CHANGE-LOG.md and CHECKPOINT.md
 Open and read the full `CHANGE-LOG.md` from the project root.
+Open and read the full `CHECKPOINT.md` from the project root.
 
 ### 2. Summarize Old History (1 line)
 Everything older than the last 3–4 days back gets collapsed into a summary.

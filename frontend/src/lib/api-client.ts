@@ -1,7 +1,5 @@
 import axios from "axios";
 
-import { demoAdapter } from "@/lib/demo/demo-adapter";
-
 /**
  * Single axios instance for the whole app.
  *
@@ -12,20 +10,11 @@ import { demoAdapter } from "@/lib/demo/demo-adapter";
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000";
 
-/** TEMPORARY — see lib/demo/fixtures.ts. Remove with the demo folder. */
-export const IS_DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
-
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
   timeout: 30_000,
 });
-
-// Swapping the transport is the only concession the app makes to demo mode.
-// Every interceptor, store, and screen below this line runs unchanged.
-if (IS_DEMO_MODE) {
-  apiClient.defaults.adapter = demoAdapter;
-}
 
 let authToken: string | null = null;
 let onUnauthorized: (() => void) | null = null;
@@ -39,8 +28,14 @@ export function setUnauthorizedHandler(handler: (() => void) | null): void {
   onUnauthorized = handler;
 }
 
-/** Endpoints where a 401 is an expected answer, not a dead session. */
-const PUBLIC_AUTH_PATHS = ["/auth/login", "/auth/accept-invite"];
+/**
+ * Endpoints where a 401 is an expected answer, not a dead session.
+ *
+ * `/vendor-chat` is token-gated rather than session-gated, so a PM signed in on
+ * the same browser must not be bounced to login by a vendor link going stale.
+ * Its own failures are 400/410 rather than 401, so this is belt-and-braces.
+ */
+const PUBLIC_AUTH_PATHS = ["/auth/login", "/auth/accept-invite", "/vendor-chat"];
 
 apiClient.interceptors.request.use((config) => {
   if (authToken) {

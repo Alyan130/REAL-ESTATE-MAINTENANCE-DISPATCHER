@@ -5,7 +5,16 @@ v1 router aggregation.
 """
 from fastapi import APIRouter
 
-from app.api.v1 import auth, properties, tenants, tickets, vendors
+from app.api.v1 import (
+    auth,
+    categories,
+    negotiations,
+    properties,
+    tenants,
+    tickets,
+    vendor_chat,
+    vendors,
+)
 
 router = APIRouter()
 
@@ -14,3 +23,6 @@ router.include_router(properties.router)
 router.include_router(tenants.router)
 router.include_router(vendors.router)
 router.include_router(tickets.router)
+router.include_router(categories.router)
+router.include_router(negotiations.router)
+router.include_router(vendor_chat.router)

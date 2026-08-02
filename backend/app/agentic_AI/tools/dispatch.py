@@ -17,8 +17,10 @@ from sqlalchemy.orm import Session
 from app.models.vendor import Vendor
 from app.models.vendor_job import VendorJob
 
-# Statuses that count against a vendor's concurrent-job capacity.
-ACTIVE_JOB_STATUSES = ["PENDING", "APPROVED"]
+# Statuses that count against a vendor's concurrent-job capacity. QUOTED is
+# included because a vendor who has quoted and is waiting on the PM has already
+# committed capacity — treating them as free would double-book them.
+ACTIVE_JOB_STATUSES = ["PENDING", "QUOTED", "APPROVED"]
 
 
 def find_best_vendor(

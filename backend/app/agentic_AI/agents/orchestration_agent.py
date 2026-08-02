@@ -14,6 +14,7 @@ from langgraph.types import interrupt
 from app.agentic_AI.ticket_state import TicketState
 from app.agentic_AI.agents.intake_agent import intake_graph
 from app.agentic_AI.agents.dispatch_agent import dispatch_graph
+from app.agentic_AI.agents.negotiation_agent import negotiation_graph
 from app.database import SessionLocal
 from app.models.notification import Notification
 
@@ -98,6 +99,17 @@ def route_after_intake(state: TicketState) -> str:
         return "dispatch"
     return "notify_pm"
 
+
+def route_after_dispatch(state: TicketState) -> str:
+    """
+    Negotiate only if dispatch actually landed a vendor. When it escalated
+    (no vendor available) there is nobody to talk to.
+    """
+    if state.error is not None:
+        return END
+    return "negotiate" if state.active_vendor_job_id else END
+
+
 builder = StateGraph(TicketState)
 
 builder.add_node("intake", intake_graph)
@@ -105,6 +117,11 @@ builder.add_node("notify_pm", notify_pm_node)
 builder.add_node("human_approval", human_approval_node)
 builder.add_node("cancel", cancel_node)
 builder.add_node("dispatch", dispatch_graph)
+# The compiled subgraph object, added directly — never wrapped in a function.
+# A wrapper node's body re-executes every time the graph resumes from an
+# interrupt inside the subgraph, which would re-run its side effects on every
+# single vendor message.
+builder.add_node("negotiate", negotiation_graph)
 
 builder.add_edge(START, "intake")
 builder.add_conditional_edges(
@@ -127,7 +144,43 @@ builder.add_conditional_edges(
     }
 )
 builder.add_edge("cancel", END)
-builder.add_edge("dispatch", END)
+builder.add_conditional_edges(
+    "dispatch",
+    route_after_dispatch,
+    {
+        "negotiate": "negotiate",
+        END: END,
+    },
+)
+builder.add_edge("negotiate", END)
 
 def get_parent_graph(checkpointer=None) -> CompiledStateGraph:
     return builder.compile(checkpointer=checkpointer)
+
+
+# ─── Post-approval graph ─────────────────────────────────────────────────────
+#
+# The fallback path — `_dispatch_from_db`, used when the parent checkpoint has
+# expired before the PM acted — cannot reuse `dispatch_graph` any more. That
+# graph compiles with no checkpointer, and negotiation interrupts inside it
+# would raise. Without this, the fallback would quietly stop at DISPATCHED and
+# the vendor would never be contacted.
+
+_post_builder = StateGraph(TicketState)
+_post_builder.add_node("dispatch", dispatch_graph)
+_post_builder.add_node("negotiate", negotiation_graph)
+_post_builder.add_edge(START, "dispatch")
+_post_builder.add_conditional_edges(
+    "dispatch",
+    route_after_dispatch,
+    {
+        "negotiate": "negotiate",
+        END: END,
+    },
+)
+_post_builder.add_edge("negotiate", END)
+
+
+def get_post_approval_graph(checkpointer=None) -> CompiledStateGraph:
+    """Dispatch → negotiate, for a ticket already approved. Needs a checkpointer."""
+    return _post_builder.compile(checkpointer=checkpointer)

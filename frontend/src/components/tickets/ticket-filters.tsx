@@ -3,8 +3,10 @@
 import { SlidersHorizontal } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { listCategories } from "@/lib/api/categories";
 import { ACTIVE_STATUSES, categoryLabel, statusLabel } from "@/lib/status";
 import { TICKET_CATEGORIES, type Property } from "@/lib/types";
+import { useAsync } from "@/lib/use-async";
 
 export interface TicketFilterValue {
   propertyId: string;
@@ -37,6 +39,13 @@ export function TicketFilters({
 }: TicketFiltersProps) {
   const active =
     Boolean(value.propertyId) || Boolean(value.status) || Boolean(value.category);
+
+  // The PM's own categories. Until the fetch lands, fall back to the seed list
+  // so the dropdown is never momentarily empty.
+  const categories = useAsync(() => listCategories(), []);
+  const options =
+    categories.data ??
+    TICKET_CATEGORIES.map((name) => ({ name, label: categoryLabel(name) }));
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -82,9 +91,9 @@ export function TicketFilters({
         onChange={(event) => onChange({ ...value, category: event.target.value })}
       >
         <option value="">All categories</option>
-        {TICKET_CATEGORIES.map((category) => (
-          <option key={category} value={category}>
-            {categoryLabel(category)}
+        {options.map((category) => (
+          <option key={category.name} value={category.name}>
+            {category.label}
           </option>
         ))}
       </select>

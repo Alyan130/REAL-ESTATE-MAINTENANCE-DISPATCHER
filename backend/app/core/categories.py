@@ -1,43 +1,36 @@
 """
 core/categories.py
 
-Single source of truth for the maintenance category vocabulary.
+The starter category vocabulary.
 
-Both the Intake agent (LLM classification output) and vendor creation (PM input)
-draw their category values from here, so the two sides cannot drift apart — a
-guaranteed shared vocabulary is what makes vendor matching reliable.
+This used to be the single source of truth — a `Literal` that constrained both
+the intake agent's classification and the categories a PM could tag a vendor
+with. The authority now lives in the `category_settings` table, one row per PM,
+so a PM can add trades this list never anticipated.
 
-When the taxonomy later moves to a DB table (per-client editable categories),
-this constant is the seed and the call sites stay the same.
+What remains here is the seed: the rows every PM starts with, copied into the
+table by the migration for existing PMs and by `CategoryService.ensure_seeded`
+for anyone created later. It is also the last-resort fallback for
+`load_allowed_categories` — if that ever returned an empty list, the intake
+prompt would offer the model no categories at all and every ticket would
+silently classify as `other` and stop dispatching.
 """
 from __future__ import annotations
 
-from typing import Literal, get_args
+# The intake fallback. A ticket lands here when no category fits, which matches
+# no vendor and therefore routes the ticket to the PM.
+OTHER = "other"
 
-# Full ticket vocabulary. "other" is an intake catch-all when the issue does not
-# fit a known trade — it intentionally matches no specialized vendor and routes
-# such tickets to the PM.
-TicketCategory = Literal[
-    "plumbing",
-    "electrical",
-    "hvac",
-    "structural",
-    "appliance",
-    "pest",
-    "cleaning",
-    "other",
+#                        (name, label, is_vendor_selectable)
+SEED_CATEGORIES: list[tuple[str, str, bool]] = [
+    ("plumbing", "Plumbing", True),
+    ("electrical", "Electrical", True),
+    ("hvac", "HVAC", True),
+    ("structural", "Structural", True),
+    ("appliance", "Appliance", True),
+    ("pest", "Pest", True),
+    ("cleaning", "Cleaning", True),
+    (OTHER, "Other", False),
 ]
 
-# Vendors specialize in a trade — "other" is never a vendor specialty, so it is
-# excluded from the categories a PM may assign to a vendor.
-VENDOR_CATEGORIES: list[str] = [c for c in get_args(TicketCategory) if c != "other"]
-
-VendorCategory = Literal[
-    "plumbing",
-    "electrical",
-    "hvac",
-    "structural",
-    "appliance",
-    "pest",
-    "cleaning",
-]
+SEED_CATEGORY_NAMES: list[str] = [name for name, _, _ in SEED_CATEGORIES]

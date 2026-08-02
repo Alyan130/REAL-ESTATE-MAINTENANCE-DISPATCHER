@@ -8,7 +8,14 @@ export type Role = "pm" | "tenant" | "vendor";
 
 export type InviteStatus = "pending" | "approved";
 
-/** backend/app/core/categories.py :: TicketCategory */
+/**
+ * backend/app/core/categories.py :: SEED_CATEGORIES
+ *
+ * The starter vocabulary only. Categories are per-PM and editable — the real
+ * list comes from `GET /categories`, so a PM may have trades that aren't here.
+ * These constants remain for labels and as a fallback before the fetch lands;
+ * never use them to constrain what a user may pick.
+ */
 export const TICKET_CATEGORIES = [
   "plumbing",
   "electrical",
@@ -20,12 +27,10 @@ export const TICKET_CATEGORIES = [
   "other",
 ] as const;
 
+/** A seed slug. A live category is a plain `string` — see `CategorySetting`. */
 export type TicketCategory = (typeof TICKET_CATEGORIES)[number];
 
-/**
- * backend/app/core/categories.py :: VENDOR_CATEGORIES
- * "other" is a ticket-only catch-all and is rejected on vendor creation.
- */
+/** "other" is the intake fallback and is rejected on vendor creation. */
 export const VENDOR_CATEGORIES = TICKET_CATEGORIES.filter(
   (category): category is Exclude<TicketCategory, "other"> => category !== "other",
 );
@@ -133,8 +138,42 @@ export interface CreateVendorRequest {
   name: string;
   email: string;
   phone?: string | null;
-  categories?: VendorCategory[] | null;
+  /** Slugs from the PM's own categories — 400 UNKNOWN_CATEGORY if one isn't. */
+  categories?: string[] | null;
   max_concurrent_jobs: number;
+}
+
+// ─── Categories ──────────────────────────────────────────────────────────────
+
+/**
+ * backend/app/schemas/categories.py :: CategoryResponse
+ *
+ * `name` is the slug that lands in `Ticket.category` and `Vendor.categories`.
+ * `max_price` is the auto-approve ceiling — null means the PM is asked about
+ * every quote in this category.
+ */
+export interface CategorySetting {
+  id: string;
+  name: string;
+  label: string;
+  target_price: number | null;
+  max_price: number | null;
+  is_vendor_selectable: boolean;
+  sort_order: number;
+}
+
+export interface CreateCategoryRequest {
+  label: string;
+  name?: string;
+  target_price?: number | null;
+  max_price?: number | null;
+}
+
+export interface UpdateCategoryRequest {
+  label?: string;
+  target_price?: number | null;
+  max_price?: number | null;
+  sort_order?: number;
 }
 
 // ─── Tickets ─────────────────────────────────────────────────────────────────
@@ -145,7 +184,8 @@ export interface Ticket {
   tenant_id: string;
   title: string;
   description: string | null;
-  category: TicketCategory | null;
+  /** A slug from the PM's categories — not limited to the seed vocabulary. */
+  category: string | null;
   priority: TicketPriority | null;
   status: TicketStatus;
   media_urls: string[] | null;
@@ -176,4 +216,75 @@ export interface CreateTicketRequest {
   description?: string;
   permission_to_enter: boolean;
   photos: File[];
+}
+
+// ─── Negotiation ─────────────────────────────────────────────────────────────
+
+/** backend/app/schemas/negotiation.py :: MessageResponse */
+export interface NegotiationMessage {
+  id: string;
+  sender: "ai" | "vendor" | "system";
+  body: string;
+  created_at: string;
+}
+
+/**
+ * backend/app/schemas/negotiation.py :: VendorChatResponse
+ *
+ * The vendor's view, served from an unauthenticated token link. It deliberately
+ * carries no street address, no ceiling, and no other vendor's quote — only what
+ * is needed to price the work. The address ships with the confirmation email
+ * once the job is approved.
+ */
+export interface VendorChat {
+  vendor_job_id: string;
+  vendor_name: string;
+  ticket_title: string;
+  ticket_summary: string;
+  category_label: string;
+  priority_label: string;
+  property_label: string;
+  access_note: string;
+  media_urls: string[];
+  status: string;
+  /** False once the job is settled — history stays readable, replies don't. */
+  can_reply: boolean;
+  messages: NegotiationMessage[];
+}
+
+/** 202 — the message is stored; the AI's answer arrives on a later poll. */
+export interface MessageAccepted {
+  id: string;
+  created_at: string;
+}
+
+/**
+ * backend/app/schemas/negotiation.py :: NegotiationResponse
+ *
+ * The PM's decision card. Separate from `VendorChat` on purpose: this one
+ * carries the ceiling, and sharing a type would make leaking it to the vendor's
+ * public page a one-line mistake.
+ */
+export interface Negotiation {
+  vendor_job_id: string;
+  vendor_name: string;
+  vendor_rating: number | null;
+  status: string;
+  quoted_price: number | null;
+  availability: string | null;
+  target_price: number | null;
+  max_price: number | null;
+  suggested_counter: number | null;
+  decision_reason: string | null;
+  counter_rounds_used: number;
+  counter_allowed: boolean;
+  awaiting_decision: boolean;
+  messages: NegotiationMessage[];
+}
+
+export type NegotiationAction = "accept" | "counter" | "next_vendor";
+
+export interface NegotiationDecisionRequest {
+  action: NegotiationAction;
+  counter_price?: number | null;
 }

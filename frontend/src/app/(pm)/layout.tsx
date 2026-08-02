@@ -1,6 +1,6 @@
 "use client";
 
-import { Building2, HardHat, LayoutDashboard, Users } from "lucide-react";
+import { Building2, HardHat, LayoutDashboard, Tags, Users } from "lucide-react";
 import type { ReactNode } from "react";
 
 import { AppShell, type NavItem } from "@/components/layout/app-shell";
@@ -19,6 +19,7 @@ const PM_NAV: NavItem[] = [
   },
   { href: "/tenants", label: "Tenants", icon: <Users size={18} /> },
   { href: "/vendors", label: "Vendors", icon: <HardHat size={18} /> },
+  { href: "/categories", label: "Categories", icon: <Tags size={18} /> },
 ];
 
 export default function PropertyManagerLayout({

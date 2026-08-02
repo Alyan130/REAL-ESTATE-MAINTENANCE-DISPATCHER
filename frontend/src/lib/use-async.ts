@@ -94,7 +94,11 @@ export function useAsync<T>(
 export function usePolling(
   active: boolean,
   onTick: () => void,
-  { intervalMs = 3000, maxTicks = 20 }: { intervalMs?: number; maxTicks?: number } = {},
+  {
+    intervalMs = 3000,
+    maxTicks = 20,
+    resetKey,
+  }: { intervalMs?: number; maxTicks?: number; resetKey?: unknown } = {},
 ): void {
   const tickRef = useRef(onTick);
 
@@ -116,5 +120,9 @@ export function usePolling(
     }, intervalMs);
 
     return () => clearInterval(timer);
-  }, [active, intervalMs, maxTicks]);
+    // `resetKey` restarts the tick budget. A chat page polls for a reply, gives
+    // up, and would then sit dead for the rest of the session — passing the
+    // last-sent timestamp means each new message buys a fresh window. Raising
+    // maxTicks instead would just poll a dead thread forever.
+  }, [active, intervalMs, maxTicks, resetKey]);
 }

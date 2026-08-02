@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { JetBrains_Mono, Open_Sans } from "next/font/google";
 
-import { DemoBadge } from "@/components/demo/demo-notice";
 import { ToastHost } from "@/components/ui/toast-host";
 
 import "./globals.css";
@@ -37,7 +36,6 @@ export default function RootLayout({
       <body className="min-h-[100dvh]">
         {children}
         <ToastHost />
-        <DemoBadge />
       </body>
     </html>
   );

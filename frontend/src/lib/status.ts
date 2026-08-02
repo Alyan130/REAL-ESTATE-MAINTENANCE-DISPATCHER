@@ -91,6 +91,7 @@ export const ALL_STATUSES = Object.keys(PM_STATUS_LABELS) as TicketStatus[];
  */
 export const ACTION_REQUIRED_STATUSES: TicketStatus[] = [
   "PENDING_APPROVAL",
+  "QUOTED",
   "NEEDS_ATTENTION",
   "ERROR",
 ];
@@ -124,7 +125,12 @@ export const STATUS_EXPLANATIONS: Partial<Record<TicketStatus, string>> = {
     "The AI is paused waiting on your decision. Nothing moves until you approve or reject.",
   DISPATCHING:
     "Vendor selection is running in the background. This page updates itself as soon as it finishes.",
-  DISPATCHED: "A vendor has been offered this job and notified by email.",
+  DISPATCHED:
+    "A vendor has been offered this job and is being asked for a price. You'll be brought in if the quote needs a decision.",
+  QUOTED:
+    "A vendor has quoted and it needs your call. The negotiation is paused until you accept, counter, or move to another vendor.",
+  APPROVED:
+    "The quote is agreed and the vendor has the job details. Nothing is waiting on you.",
   NEEDS_ATTENTION:
     "The AI escalated this: no vendor was available, or approval processing failed. It needs you to act manually.",
   ERROR:
@@ -169,6 +175,22 @@ const CATEGORY_LABELS: Record<TicketCategory, string> = {
   other: "Other",
 };
 
+/**
+ * Display name for a category slug.
+ *
+ * Categories are PM-editable, so a slug the seed list has never heard of ("dry-
+ * lining") is normal rather than an error. Those get title-cased here so a
+ * custom category doesn't render as a raw slug next to the built-in ones. The
+ * PM's own label is authoritative where a `CategorySetting` is on hand — use
+ * that in preference to this.
+ */
 export function categoryLabel(category: string): string {
-  return CATEGORY_LABELS[category as TicketCategory] ?? category;
+  const known = CATEGORY_LABELS[category as TicketCategory];
+  if (known) return known;
+
+  return category
+    .split(/[-_\s]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 }

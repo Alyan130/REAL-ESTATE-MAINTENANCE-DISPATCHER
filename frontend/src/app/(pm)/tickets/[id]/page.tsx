@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 
+import { NegotiationCard } from "@/components/tickets/negotiation-card";
 import { PhotoGrid } from "@/components/tickets/photo-grid";
 import {
   CategoryBadge,
@@ -25,6 +26,7 @@ import { Card, CardBody, CardHeader } from "@/components/ui/card";
 import { ConfirmDialog } from "@/components/ui/confirm-dialog";
 import { FadeIn } from "@/components/ui/motion-list";
 import { DetailSkeleton } from "@/components/ui/skeleton";
+import { getNegotiation } from "@/lib/api/negotiation";
 import { getProperty } from "@/lib/api/properties";
 import { getTenant } from "@/lib/api/tenants";
 import {
@@ -53,6 +55,14 @@ export default function TicketDetailPage() {
     return { ticket, property, tenant };
   }, [ticketId]);
 
+  // A second loader, deliberately separate from the ticket's. Most tickets have
+  // no negotiation and this 404s — folding it into the resource above would
+  // blank the whole page for the normal case.
+  const negotiation = useAsync(
+    () => getNegotiation(ticketId).catch(() => null),
+    [ticketId],
+  );
+
   const [confirmingReject, setConfirmingReject] = useState(false);
   const [approving, setApproving] = useState(false);
   const [rejecting, setRejecting] = useState(false);
@@ -66,6 +76,17 @@ export default function TicketDetailPage() {
     ticket?.status === "DISPATCHING",
     () => void resource.reload({ silent: true }),
     { intervalMs: 3000, maxTicks: 20 },
+  );
+
+  // While a vendor is being talked to, the transcript grows in the background
+  // with no push channel — so the card polls, and stops once the job settles.
+  usePolling(
+    ticket?.status === "DISPATCHED" || ticket?.status === "QUOTED",
+    () => {
+      void negotiation.reload({ silent: true });
+      void resource.reload({ silent: true });
+    },
+    { intervalMs: 5000, maxTicks: 60 },
   );
 
   const handleApprove = async () => {
@@ -223,6 +244,17 @@ export default function TicketDetailPage() {
               </div>
             </CardBody>
           </Card>
+
+          {negotiation.data ? (
+            <NegotiationCard
+              ticketId={ticketId}
+              negotiation={negotiation.data}
+              onChanged={() => {
+                void negotiation.reload({ silent: true });
+                void resource.reload({ silent: true });
+              }}
+            />
+          ) : null}
 
           <Card>
             <CardHeader

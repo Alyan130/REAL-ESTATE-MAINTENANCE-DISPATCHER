@@ -30,3 +30,6 @@ class User(Base):
     vendors = relationship("Vendor", back_populates="pm", foreign_keys="Vendor.pm_id")
     tenant_profile = relationship("Tenant", back_populates="user", foreign_keys="Tenant.user_id")
     notifications = relationship("Notification", back_populates="user", foreign_keys="Notification.user_id")
+    category_settings = relationship(
+        "CategorySetting", back_populates="pm", foreign_keys="CategorySetting.pm_id"
+    )
